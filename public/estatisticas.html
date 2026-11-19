@@ -103,7 +103,7 @@ async function carregar() {
       bloco.className = 'barra';
       const rotulo = document.createElement('div');
       rotulo.className = 'rotulo';
-      const nome = document.createElement('span'); nome.textContent = 'Pergunta ' + (p.pergunta + 1);
+      const nome = document.createElement('span'); nome.textContent = 'Pergunta ' + p.pergunta;
       const valor = document.createElement('span'); valor.textContent = p.acertos + '/' + p.respondidas + ' (' + pct + '%)';
       rotulo.append(nome, valor);
       const trilha = document.createElement('div'); trilha.className = 'trilha';
@@ -149,7 +149,7 @@ async function buscar() {
     for (const x of d.respostas) {
       const p = document.createElement('div');
       p.className = x.acertou ? 'certo' : 'errado';
-      p.textContent = (x.acertou ? '✓' : '✗') + ' Pergunta ' + (x.pergunta + 1);
+      p.textContent = (x.acertou ? '✓' : '✗') + ' Pergunta ' + x.pergunta;
       res.append(p);
     }
     if (d.palavra) {

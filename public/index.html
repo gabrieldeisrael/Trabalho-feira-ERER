@@ -13,35 +13,106 @@
 </style>
 <div id="app"></div>
 <script>
-const TEMA = 'uma palavra sobre o tema'; // ajuste o texto
+const TEMA = 'uma palavra sobre racismo, preconceito e discriminação';
+// "id" é fixo: as estatísticas usam esse número, não a ordem em que a pergunta aparece.
 const QUIZ = [
-  { p: 'Pergunta placeholder 1?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 0 },
-  { p: 'Pergunta placeholder 2?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 1 },
-  { p: 'Pergunta placeholder 3?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 2 },
-  { p: 'Pergunta placeholder 4?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 0 },
-  { p: 'Pergunta placeholder 5?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 1 },
-]; // sem "certa" = pergunta de opinião (não conta ponto)
-const TOTAL = QUIZ.filter(q => 'certa' in q).length;
+  { id: 1, p: 'O que é racismo?', o: [
+    'Um sistema de ideias e práticas que produz desigualdade entre grupos raciais',
+    'Uma opinião negativa sobre alguém sem conhecê-lo',
+    'Um ato isolado de violência entre duas pessoas',
+    'A preferência por determinada religião'], certa: 0 },
+  { id: 2, p: 'Qual a diferença entre preconceito e discriminação?', o: [
+    'Preconceito é a ação e discriminação é a ideia',
+    'Preconceito só existe entre estrangeiros',
+    'Preconceito e discriminação são sinônimos',
+    'Preconceito é um julgamento antes de conhecer; discriminação é a ação que nega direitos'], certa: 3 },
+  { id: 3, p: 'O que significa racismo estrutural?', o: [
+    'Racismo presente apenas em leis antigas',
+    'Racismo embutido em regras, instituições e hábitos, que gera desigualdade mesmo sem intenção declarada',
+    'Racismo praticado somente por pessoas más',
+    'Racismo que acontece apenas na escola'], certa: 1 },
+  { id: 4, p: 'O que diz a Constituição Federal de 1988 sobre o racismo?', o: [
+    'É crime inafiançável e imprescritível',
+    'É contravenção punida com multa',
+    'O racismo não é citado na Constituição',
+    'Só é crime se houver agressão física'], certa: 0 },
+  { id: 5, p: 'O que estabelece a Lei 7.716/89, conhecida como Lei Caó?', o: [
+    'Torna obrigatório o ensino de história afro-brasileira',
+    'Cria cotas em universidades',
+    'Define os crimes resultantes de preconceito de raça, cor, etnia, religião ou procedência nacional',
+    'Cria o Dia da Consciência Negra'], certa: 2 },
+  { id: 6, p: 'O que mudou com a Lei 14.532/2023?', o: [
+    'Tornou o crime de racismo prescritível',
+    'Acabou com a Lei Caó',
+    'Acabou com as cotas nas universidades',
+    'Equiparou a injúria racial ao crime de racismo e aumentou as penas'], certa: 3 },
+  { id: 7, p: 'Se um aluno é excluído de um grupo apenas por ser negro, isto é:', o: [
+    'Discriminação, porque é uma ação que nega participação por causa da raça',
+    'Preconceito, porque é apenas uma opinião',
+    'Racismo recreativo, porque é uma brincadeira',
+    'Nenhuma das anteriores'], certa: 0 },
+  { id: 8, p: 'O que determina a Lei 10.639/2003?', o: [
+    'Cria o feriado de 20 de novembro',
+    'O ensino obrigatório de história e cultura afro-brasileira nas escolas',
+    'Cria cotas em universidades e concursos',
+    'Cria o Disque 100'], certa: 1 },
+  { id: 9, p: 'Qual é o objetivo das ações afirmativas, como as cotas?', o: [
+    'Dar vantagens permanentes a um grupo',
+    'Corrigir desigualdades históricas e ampliar oportunidades para grupos excluídos',
+    'Substituir o vestibular das universidades',
+    'Reduzir o número de vagas oferecidas'], certa: 1 },
+  { id: 10, p: 'Por que 20 de novembro é uma data importante?', o: [
+    'É o dia da promulgação da Constituição de 1988',
+    'É o dia da Abolição da Escravidão no Brasil',
+    'É o Dia da Consciência Negra, em lembrança da morte de Zumbi dos Palmares',
+    'É o dia do Disque 100'], certa: 2 },
+]; // sem "certa" (índice -1) = pergunta de opinião, não conta ponto
+const TOTAL = QUIZ.filter(q => q.certa >= 0).length;
 const app = document.getElementById('app');
-let i = 0, pts = 0, numero = null;
+let numero, ordem, i = 0, pts = 0, respostas = {};
+
+const salvar = () => sessionStorage.estado = JSON.stringify({ numero, ordem, i, pts, respostas });
+const ler = () => { try { return JSON.parse(sessionStorage.estado); } catch (e) { return null; } };
+
+function embaralhar(a) {
+  const b = a.slice();
+  for (let k = b.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1));
+    [b[k], b[j]] = [b[j], b[k]];
+  }
+  return b;
+}
+
+function montarQuiz() {
+  return embaralhar(QUIZ).map(q => {
+    const opcoes = embaralhar(q.o.map((texto, k) => ({ texto, certa: k === q.certa })));
+    return { id: q.id, p: q.p, o: opcoes.map(x => x.texto), certa: opcoes.findIndex(x => x.certa) };
+  });
+}
 
 async function iniciar() {
-  numero = sessionStorage.numero;
-  if (!numero) {
+  const estado = ler();
+  if (estado) {
+    ({ numero, ordem, i, pts, respostas } = estado);
+    respostas = respostas || {};
+  } else {
     const r = await fetch('/api/participantes', { method: 'POST' });
-    const d = await r.json();
-    numero = d.numero;
-    sessionStorage.numero = numero;
+    numero = (await r.json()).numero;
+    ordem = montarQuiz();
+    i = 0;
+    pts = 0;
+    respostas = {};
+    salvar();
   }
-  if (sessionStorage.enviou) return final();
+  if (estado && estado.enviou) return final();
   pergunta();
 }
 
 function cabecalho() { return '<p class="num">Participante #' + numero + '</p>'; }
 
 function pergunta() {
-  if (i >= QUIZ.length) return palavra();
-  const q = QUIZ[i];
+  if (i >= ordem.length) return palavra();
+  const q = ordem[i];
   app.innerHTML = cabecalho();
   const h = document.createElement('h2');
   h.textContent = q.p;
@@ -50,18 +121,21 @@ function pergunta() {
     const b = document.createElement('button');
     b.textContent = t;
     b.onclick = async () => {
-      if ('certa' in q) {
+      if (q.certa >= 0) {
         const acertou = k === q.certa;
-        if (acertou) pts++;
+        respostas[q.id] = acertou;
+        pts = Object.values(respostas).filter(Boolean).length;
+        salvar();
         try {
           await fetch('/api/respostas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ numero: Number(numero), pergunta: i, acertou }),
+            body: JSON.stringify({ numero: Number(numero), pergunta: q.id, acertou }),
           });
         } catch (e) { /* segue o quiz mesmo se a rede falhar */ }
       }
       i++;
+      salvar();
       pergunta();
     };
     app.append(b);
@@ -72,8 +146,7 @@ function final() {
   app.innerHTML = cabecalho() + '<h2>Valeu! Seu número é #' + numero + '.</h2>' +
     '<p>Olha a nuvem na TV.</p><button id="novo">Próxima pessoa</button>';
   document.getElementById('novo').onclick = () => {
-    sessionStorage.removeItem('numero');
-    sessionStorage.removeItem('enviou');
+    sessionStorage.removeItem('estado');
     location.reload();
   };
 }
@@ -93,7 +166,8 @@ function palavra() {
         body: JSON.stringify({ texto, numero: Number(numero) }),
       });
       if (!r.ok) throw new Error('falhou');
-      sessionStorage.enviou = '1';
+      const estado = ler() || {};
+      sessionStorage.estado = JSON.stringify({ ...estado, enviou: true });
       final();
     } catch (e) {
       b.disabled = false;

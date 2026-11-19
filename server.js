@@ -131,7 +131,7 @@ app.get('/api/stats', async (q, r) => {
     db.query(`select (select count(*) from participantes)::int as participantes,
                      (select count(*) from palavras)::int as palavras,
                      (select count(*) from palavras where status='aprovada')::int as aprovadas`),
-    db.query('select coalesce(max(pergunta) + 1, 0)::int as n from respostas'),
+    db.query('select count(distinct pergunta)::int as n from respostas'),
   ]);
   r.json({
     perguntas: perguntas.rows,
