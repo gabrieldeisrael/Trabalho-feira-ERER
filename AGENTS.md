@@ -3,7 +3,8 @@
 Este projeto manipula arquivos e roda no Render (Plano Free). Nunca adicione comentários dentro dos arquivos JSON.
 
 1. **Antes de agir:** Leia as primeiras linhas do arquivo `AI_LOG.md` na raiz para entender as últimas alterações feitas no projeto.
-2. **Ao concluir qualquer alteração:** Adicione uma nova linha no topo da lista em `AI_LOG.md` seguindo estritamente este formato (sem negrito, sem data, apenas texto direto separado por barra vertical, cada registro em sua própria linha):
+2. **Ao concluir e validar qualquer alteração:** NÃO escreva no `AI_LOG.md` durante tentativas intermediárias ou antes de o usuário testar/aprovar. Apenas depois que a alteração estiver finalizada e o usuário confirmar que deu tudo certo (ex: "ok", "funcionou", "pode fechar" etc.), adicione uma nova linha logo abaixo da linha divisória `---` em `AI_LOG.md` seguindo estritamente este formato (sem negrito, sem data, cada registro em sua própria linha):
+
    `[Nome da IA] | [Nome ou Usuário do Github ou Apelido do Integrante] | [Resumo curto e direto do que foi feito e em quais arquivos]`
 
 Exemplo:
