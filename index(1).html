@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuvem de palavras: racismo, preconceito e discriminação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef0f6; --card: #ffffff; --ink: #181c33; --muted: #5a6082; --line: #cfd4e6;
+    --p: #c2331f; --r: #0d7a6a; --l: #3a4db5;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11152b; --card: #1d2247; --ink: #eceffa; --muted: #9aa2c8; --line: #2a3057;
+      --p: #ff7d66; --r: #52d6ba; --l: #93a5ff;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #11152b; --card: #1d2247; --ink: #eceffa; --muted: #9aa2c8; --line: #2a3057;
+    --p: #ff7d66; --r: #52d6ba; --l: #93a5ff;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 20px 56px; }
+  h1 {
+    font-size: clamp(1.9rem, 5vw, 3.4rem); font-weight: 800; line-height: 1.05;
+    letter-spacing: -0.025em; margin: 0 0 12px; max-width: 18ch;
+  }
+  .sub { color: var(--muted); margin: 0 0 28px; max-width: 60ch; font-size: 1.05rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .legend button {
+    font: inherit; font-size: .92rem; font-weight: 600; background: transparent;
+    border: 2px solid currentColor; border-radius: 999px; padding: 6px 14px; cursor: pointer;
+  }
+  .legend button span { color: var(--ink); }
+  .legend button[data-g="p"] { color: var(--p); }
+  .legend button[data-g="r"] { color: var(--r); }
+  .legend button[data-g="l"] { color: var(--l); }
+  .legend button[aria-pressed="true"] { background: currentColor; }
+  .legend button[aria-pressed="true"] span { color: var(--bg); }
+  .legend button:focus-visible, .w:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  #cloud { position: relative; width: 100%; overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .w {
+    position: absolute; white-space: nowrap; line-height: 1; font-weight: 800;
+    letter-spacing: -0.02em; cursor: help; opacity: 0;
+    transition: opacity .5s ease, transform .15s ease;
+  }
+  .w.in { opacity: 1; }
+  .w.dim { opacity: .1; }
+  .w:hover, .w:focus-visible { transform: scale(1.08); z-index: 2; }
+  .g-p { color: var(--p); }
+  .g-r { color: var(--r); font-weight: 600; }
+  .g-l { color: var(--l); font-weight: 600; }
+
+  #tip {
+    position: fixed; z-index: 50; left: 0; top: 0; width: max-content; max-width: min(300px, calc(100vw - 16px));
+    background: var(--card); color: var(--ink); border: 1px solid var(--line);
+    border-left: 5px solid var(--c, var(--l)); border-radius: 8px; padding: 10px 14px 12px;
+    box-shadow: 0 10px 30px rgba(10, 14, 40, .22); pointer-events: none;
+    opacity: 0; visibility: hidden; transition: opacity .12s ease;
+  }
+  #tip.show { opacity: 1; visibility: visible; }
+  #tip b { display: block; font-size: 1.05rem; line-height: 1.2; }
+  #tip small { display: block; color: var(--c, var(--muted)); font-weight: 600; font-size: .78rem; margin: 2px 0 6px; }
+  #tip p { margin: 0; font-size: .92rem; line-height: 1.4; }
+
+  dl.defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px; margin: 32px 0 0; }
+  dt { font-weight: 800; font-size: 1.15rem; margin-bottom: 4px; }
+  dd { margin: 0; color: var(--muted); max-width: 40ch; }
+  .note { margin-top: 32px; padding-left: 14px; border-left: 4px solid var(--l); color: var(--muted); max-width: 70ch; }
+  .note strong { color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .w, #tip { transition: none; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Racismo, preconceito e discriminação</h1>
+  <p class="sub">As palavras do problema, as palavras da lei e as palavras que usamos para enfrentá-lo. Passe o mouse (ou toque) em uma palavra para ver o que ela significa.</p>
+
+  <div class="legend" role="group" aria-label="Filtrar por grupo">
+    <button type="button" data-g="p" aria-pressed="false"><span>O que machuca</span></button>
+    <button type="button" data-g="r" aria-pressed="false"><span>O que construímos</span></button>
+    <button type="button" data-g="l" aria-pressed="false"><span>O que a lei diz</span></button>
+  </div>
+
+  <div id="cloud" role="group" aria-label="Nuvem de palavras sobre racismo, preconceito e discriminação"></div>
+  <div id="tip" role="tooltip"></div>
+
+  <dl class="defs">
+    <div><dt>Racismo</dt><dd>Sistema de ideias e práticas que trata pessoas de forma desigual por causa da raça ou cor, produzindo exclusão e desvantagens.</dd></div>
+    <div><dt>Preconceito</dt><dd>Opinião ou sentimento negativo formado sem conhecer a pessoa, apenas pelo grupo a que ela pertence.</dd></div>
+    <div><dt>Discriminação</dt><dd>Ação concreta que nega direitos ou oportunidades a alguém por causa de preconceito.</dd></div>
+  </dl>
+
+  <p class="note"><strong>No Brasil, racismo é crime inafiançável e imprescritível</strong> (Constituição Federal, art. 5º, XLII). Para denunciar violações de direitos humanos, ligue para o Disque 100.</p>
+</main>
+
+<script>
+  const GROUPS = { p: "O que machuca", r: "O que construímos", l: "O que a lei diz" };
+
+  // [palavra, peso (1–100), grupo, explicação]
+  const WORDS = [
+    // ---- O que machuca ----
+    ["racismo",100,"p","Tratar pessoas de forma desigual por causa da raça ou da cor da pele, em atitudes e também nas estruturas da sociedade."],
+    ["discriminação",92,"p","Ação que nega direitos, oportunidades ou respeito a alguém por pertencer a um grupo."],
+    ["preconceito",92,"p","Julgamento negativo feito antes de conhecer a pessoa, só pelo grupo a que ela pertence."],
+    ["racismo estrutural",70,"p","Quando o racismo está embutido nas regras, instituições e hábitos da sociedade e gera desigualdade mesmo sem intenção declarada."],
+    ["xenofobia",62,"p","Aversão ou hostilidade a pessoas estrangeiras ou de outras regiões, como imigrantes e refugiados."],
+    ["injúria racial",64,"p","Ofender a dignidade de alguém usando elementos de raça ou cor. Desde 2023 é equiparada ao crime de racismo."],
+    ["estereótipo",56,"p","Imagem simplificada e repetida sobre um grupo, que ignora as diferenças entre as pessoas."],
+    ["intolerância",58,"p","Recusa em aceitar ideias, crenças ou modos de vida diferentes dos seus."],
+    ["desigualdade",56,"p","Diferença injusta de acesso a renda, educação, saúde e segurança entre grupos."],
+    ["segregação",52,"p","Separar grupos de pessoas e limitar seu acesso a lugares, serviços e direitos."],
+    ["injustiça",50,"p","Tratamento que viola o que seria justo, negando a alguém o que lhe é devido."],
+    ["exclusão",48,"p","Deixar pessoas de fora de espaços, decisões e oportunidades."],
+    ["violência",48,"p","Uso de força física, ameaça ou agressão moral que causa dano a alguém."],
+    ["escravidão",48,"p","Sistema que tratou pessoas africanas e seus descendentes como propriedade. No Brasil durou séculos."],
+    ["colorismo",44,"p","Tratamento diferente entre pessoas negras conforme o tom da pele: quanto mais escura, mais discriminação."],
+    ["racismo institucional",50,"p","Quando órgãos públicos ou empresas, por suas regras e práticas, tratam grupos raciais de forma desigual."],
+    ["racismo recreativo",44,"p","Piadas e brincadeiras racistas apresentadas como humor, que ferem e reforçam estereótipos."],
+    ["racismo ambiental",36,"p","Quando comunidades negras, indígenas e pobres sofrem mais com poluição, enchentes e falta de saneamento."],
+    ["intolerância religiosa",44,"p","Ataque, ofensa ou desrespeito a pessoas por causa de sua religião ou crença."],
+    ["democracia racial",38,"p","Mito de que no Brasil não existe racismo porque as raças convivem em harmonia. Os dados de desigualdade o contradizem."],
+    ["humilhação",40,"p","Fazer alguém sentir vergonha ou inferioridade, atingindo sua dignidade."],
+    ["ódio",40,"p","Aversão intensa que, quando dirigida a grupos, alimenta violência e discriminação."],
+    ["microagressão",34,"p","Comentário ou gesto aparentemente pequeno que, repetido, expressa desprezo por um grupo."],
+    ["apagamento",34,"p","Ignorar ou esconder a história, a cultura e as contribuições de um grupo."],
+    ["genocídio",34,"p","Destruição de um grupo de pessoas, no todo ou em parte, por causa de sua origem, raça ou religião."],
+    ["eugenia",30,"p","Teoria sem base científica do século XIX que defendia \"melhorar\" a humanidade por critérios raciais."],
+    ["supremacismo",34,"p","Ideologia que afirma a superioridade de um grupo sobre os outros. Não tem base científica."],
+    ["branqueamento",32,"p","Política do fim do século XIX e início do XX que incentivava a imigração europeia para \"clarear\" a população brasileira."],
+    ["apartheid",36,"p","Regime oficial de segregação racial na África do Sul, que vigorou de 1948 até a década de 1990."],
+    ["etnocentrismo",32,"p","Ver a própria cultura como superior e usá-la como medida para julgar as demais."],
+    ["estigma",30,"p","Marca negativa que a sociedade atribui a uma pessoa ou grupo e que leva à rejeição."],
+    ["generalização",30,"p","Atribuir a todas as pessoas de um grupo as características de algumas."],
+    ["criminalização",32,"p","Tratar pessoas de um grupo como suspeitas por padrão, por causa da cor ou da origem."],
+    ["perfilamento racial",30,"p","Abordagens de vigilância ou policiais baseadas na cor da pele, e não no comportamento."],
+    ["marginalização",30,"p","Empurrar um grupo para as margens da sociedade, longe do poder e dos recursos."],
+    ["bullying",28,"p","Agressões repetidas, físicas ou verbais, muitas vezes ligadas a aparência, cor ou origem."],
+    ["privilégio",32,"p","Vantagem que algumas pessoas têm, muitas vezes sem perceber, apenas por pertencerem a certo grupo."],
+    ["negação",30,"p","Dizer que o racismo não existe impede que ele seja reconhecido e combatido."],
+    ["silêncio",34,"p","Calar diante de uma ofensa ou injustiça também pode manter o racismo funcionando."],
+    ["ignorância",32,"p","Falta de conhecimento sobre o outro, terreno onde o preconceito cresce."],
+    ["machismo",32,"p","Crença de que homens são superiores às mulheres, que sustenta desigualdade e violência de gênero."],
+    ["homofobia",34,"p","Aversão ou discriminação contra pessoas LGBTQIA+. Desde 2019 é equiparada ao crime de racismo por decisão do STF."],
+    ["capacitismo",30,"p","Discriminação contra pessoas com deficiência, tratando-as como menos capazes."],
+    ["antissemitismo",30,"p","Preconceito e hostilidade contra pessoas judias."],
+    ["islamofobia",28,"p","Preconceito e hostilidade contra pessoas muçulmanas."],
+
+    // ---- O que construímos ----
+    ["igualdade",78,"r","Todas as pessoas têm o mesmo valor e os mesmos direitos."],
+    ["respeito",76,"r","Reconhecer o outro como alguém digno, mesmo pensando ou vivendo de modo diferente."],
+    ["antirracismo",72,"r","Postura ativa de combater o racismo no dia a dia, e não apenas deixar de praticá-lo."],
+    ["equidade",66,"r","Dar a cada pessoa o que ela precisa para ter oportunidades de fato iguais."],
+    ["direitos humanos",66,"r","Direitos de todas as pessoas, sem exceção, como vida, liberdade, educação e igualdade."],
+    ["diversidade",64,"r","A variedade de origens, cores, culturas, corpos e ideias que forma a sociedade."],
+    ["inclusão",62,"r","Garantir que todas as pessoas possam participar e ser ouvidas."],
+    ["dignidade",60,"r","Valor que toda pessoa tem por existir e que nunca pode ser retirado."],
+    ["justiça",60,"r","Dar a cada um o que lhe é devido, com leis aplicadas sem distinção."],
+    ["educação",60,"r","Principal caminho para desfazer preconceitos e construir respeito desde a infância."],
+    ["empatia",58,"r","Capacidade de se colocar no lugar do outro e compreender o que ele sente."],
+    ["representatividade",52,"r","Ver pessoas de diferentes grupos em posições de destaque: na mídia, na política e no trabalho."],
+    ["resistência",50,"r","A luta histórica de povos negros e indígenas por liberdade e direitos."],
+    ["denúncia",50,"r","Registrar e comunicar casos de discriminação às autoridades."],
+    ["consciência",48,"r","Perceber o racismo e seus efeitos para poder agir contra ele."],
+    ["solidariedade",46,"r","Apoio mútuo entre pessoas, especialmente com quem está mais vulnerável."],
+    ["liberdade",46,"r","Direito de viver, pensar e ser quem se é sem opressão."],
+    ["diálogo",44,"r","Conversa aberta, em que se escuta de verdade antes de responder."],
+    ["luta",44,"r","Mobilização coletiva por direitos, que transformou leis e práticas ao longo da história."],
+    ["cidadania",44,"r","Exercer direitos e deveres e participar da vida da comunidade."],
+    ["quilombo",42,"r","Comunidade de resistência formada por pessoas negras que lutaram pela liberdade. Muitos existem até hoje."],
+    ["memória",42,"r","Lembrar a história da escravidão e do racismo para não repeti-los."],
+    ["pertencimento",42,"r","Sentir-se parte de um lugar e de uma comunidade."],
+    ["acolhimento",40,"r","Receber o outro com atenção e cuidado, sem julgamento."],
+    ["letramento racial",40,"r","Aprender a reconhecer o racismo e suas formas para saber como combatê-lo."],
+    ["protagonismo",38,"r","Pessoas e comunidades contando a própria história e liderando as próprias lutas."],
+    ["reparação",38,"r","Ações para corrigir danos históricos, como políticas públicas de inclusão."],
+    ["oportunidades",38,"r","Acesso real a estudo, trabalho e renda, sem barreiras por causa da cor ou da origem."],
+    ["interseccionalidade",36,"r","Entender que raça, gênero, classe e outras marcas se cruzam e podem somar discriminações."],
+    ["políticas públicas",36,"r","Programas do governo que enfrentam desigualdades, como educação, saúde e moradia."],
+    ["ancestralidade",36,"r","Valorizar as raízes, as histórias e os saberes de quem veio antes."],
+    ["convivência",34,"r","Viver junto com respeito às diferenças."],
+    ["cultura afro-brasileira",38,"r","Herança africana presente na música, na culinária, na religião, na língua e na arte do Brasil."],
+    ["Zumbi dos Palmares",40,"r","Líder do Quilombo dos Palmares e símbolo da resistência negra. Morreu em 20 de novembro de 1695."],
+    ["autoestima",32,"r","Valorizar a si mesmo: algo que o racismo tenta ferir e que a representatividade fortalece."],
+    ["escuta",32,"r","Ouvir quem sofre discriminação sem minimizar o que a pessoa conta."],
+    ["aliança",30,"r","Pessoas de diferentes grupos se unindo contra o racismo."],
+    ["orgulho",30,"r","Valorizar a própria identidade, cor, cultura e história."],
+    ["paz",34,"r","Convivência sem violência, baseada em justiça e respeito."],
+
+    // ---- O que a lei diz ----
+    ["crime",54,"l","No Brasil, praticar racismo é crime previsto em lei."],
+    ["Lei 7.716/89",46,"l","Define os crimes resultantes de preconceito de raça, cor, etnia, religião ou procedência nacional."],
+    ["inafiançável",44,"l","Quem comete racismo não pode ser liberado mediante pagamento de fiança."],
+    ["imprescritível",44,"l","O crime de racismo não prescreve: pode ser punido a qualquer tempo."],
+    ["Constituição",42,"l","A Constituição de 1988 estabelece que a prática do racismo é crime inafiançável e imprescritível (art. 5º, XLII)."],
+    ["Lei Caó",40,"l","Nome pelo qual é conhecida a Lei 7.716/89, de autoria do deputado Carlos Alberto Caó."],
+    ["Consciência Negra",42,"l","Dia 20 de novembro, feriado nacional desde 2024, dedicado a refletir sobre a história e a luta da população negra."],
+    ["ações afirmativas",40,"l","Políticas que buscam corrigir desigualdades históricas, como as cotas."],
+    ["Estatuto da Igualdade Racial",36,"l","Lei 12.288/2010, que garante à população negra igualdade de oportunidades e defesa de seus direitos."],
+    ["cotas",36,"l","Reserva de vagas, por exemplo em universidades e concursos, para grupos historicamente excluídos."],
+    ["Disque 100",34,"l","Canal nacional e gratuito para denunciar violações de direitos humanos, incluindo discriminação."],
+    ["Lei Áurea",36,"l","Assinada em 13 de maio de 1888, aboliu a escravidão no Brasil, mas sem garantir terra, trabalho ou educação aos libertos."],
+    ["Lei 14.532/23",32,"l","Equiparou a injúria racial ao crime de racismo e aumentou as penas."],
+    ["Lei 10.639/03",30,"l","Tornou obrigatório o ensino de história e cultura afro-brasileira nas escolas."],
+    ["Lei de Cotas",30,"l","Lei 12.711/2012: reserva vagas em universidades e institutos federais para estudantes de escolas públicas, com recortes para pretos, pardos, indígenas e pessoas com deficiência."],
+    ["Lei Afonso Arinos",28,"l","Lei de 1951, a primeira a tratar a discriminação racial como contravenção penal no Brasil."],
+    ["boletim de ocorrência",28,"l","Registro feito na delegacia para denunciar racismo e abrir uma investigação."],
+    ["Declaração Universal",28,"l","Documento da ONU de 1948 que afirma que todas as pessoas nascem livres e iguais em dignidade e direitos."],
+    ["20 de novembro",30,"l","Data da morte de Zumbi dos Palmares, em 1695, e do Dia Nacional da Consciência Negra."]
+  ];
+
+  const box = document.getElementById("cloud");
+  const tip = document.getElementById("tip");
+  const buttons = document.querySelectorAll(".legend button");
+  const GROUP_VAR = { p: "var(--p)", r: "var(--r)", l: "var(--l)" };
+  const MIN_FS = 11;
+  let activeGroup = null;
+
+  /* ---------- Tooltip ---------- */
+  function showTip(el) {
+    const [text, , g, def] = WORDS[+el.dataset.i];
+    tip.innerHTML = "";
+    const b = document.createElement("b"); b.textContent = text;
+    const s = document.createElement("small"); s.textContent = GROUPS[g];
+    const p = document.createElement("p"); p.textContent = def;
+    tip.append(b, s, p);
+    tip.style.setProperty("--c", GROUP_VAR[g]);
+    tip.classList.add("show");
+    const r = el.getBoundingClientRect();
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = r.left + r.width / 2 - tw / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+    let top = r.top - th - 10;
+    if (top < 8) top = r.bottom + 10;
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+  }
+  function hideTip() { tip.classList.remove("show"); }
+
+  box.addEventListener("mouseover", e => { const w = e.target.closest(".w"); if (w) showTip(w); });
+  box.addEventListener("mouseout", e => { if (e.target.closest(".w")) hideTip(); });
+  box.addEventListener("focusin", e => { const w = e.target.closest(".w"); if (w) showTip(w); });
+  box.addEventListener("focusout", hideTip);
+  box.addEventListener("click", e => { const w = e.target.closest(".w"); if (w) showTip(w); });
+  document.addEventListener("click", e => { if (!e.target.closest(".w")) hideTip(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); });
+  window.addEventListener("scroll", hideTip, { passive: true });
+
+  /* ---------- Layout em espiral ---------- */
+  function run(scale, W, H) {
+    box.innerHTML = "";
+    const placed = [];
+    const pad = 4;
+    const cx = W / 2, cy = H / 2, aspect = W / H, maxR = Math.hypot(W, H);
+    let dropped = 0;
+
+    WORDS.map((w, i) => ({ w, i })).sort((a, b) => b.w[1] - a.w[1]).forEach(({ w: [text, weight, group], i }) => {
+      const el = document.createElement("span");
+      el.className = "w g-" + group;
+      el.dataset.i = i; el.dataset.g = group;
+      el.tabIndex = 0;
+      el.textContent = text;
+      box.appendChild(el);
+
+      let fs = Math.max(MIN_FS, (12 + Math.pow(weight / 100, 1.2) * 86) * scale);
+      let done = false;
+
+      for (let attempt = 0; attempt < 3 && !done; attempt++) {
+        el.style.fontSize = fs + "px";
+        const w = el.offsetWidth + pad * 2, h = el.offsetHeight + pad * 2;
+        if (w <= W) {
+          let a = 0;
+          for (let n = 0; n < 9000; n++) {
+            const r = 2.2 * a;
+            if (r > maxR) break;
+            const x = cx + r * Math.cos(a) * aspect - w / 2;
+            const y = cy + r * Math.sin(a) - h / 2;
+            a += 10 / (r + 10);
+            if (x < 0 || y < 0 || x + w > W || y + h > H) continue;
+            let hit = false;
+            for (const p of placed) {
+              if (x < p.x + p.w && x + w > p.x && y < p.y + p.h && y + h > p.y) { hit = true; break; }
+            }
+            if (!hit) {
+              placed.push({ x, y, w, h });
+              el.style.left = (x + pad) + "px";
+              el.style.top = (y + pad) + "px";
+              done = true;
+              break;
+            }
+          }
+        }
+        if (!done) { if (fs <= MIN_FS) break; fs = Math.max(MIN_FS, fs * 0.9); }
+      }
+      if (!done) { el.remove(); dropped++; }
+    });
+    return dropped;
+  }
+
+  function layout() {
+    hideTip();
+    const W = box.clientWidth;
+    const H = W < 600 ? Math.round(W * 2.4) : Math.round(Math.min(W * 0.68, 780));
+    box.style.height = H + "px";
+
+    let scale = Math.max(0.55, Math.min(1, W / 1000));
+    let dropped = run(scale, W, H);
+    // Se alguma palavra não coube, reduz a escala geral e tenta de novo.
+    while (dropped > 0 && scale > 0.3) { scale *= 0.92; dropped = run(scale, W, H); }
+
+    box.querySelectorAll(".w").forEach((el, k) => {
+      if (activeGroup && el.dataset.g !== activeGroup) el.classList.add("dim");
+      setTimeout(() => el.classList.add("in"), k * 14);
+    });
+  }
+
+  buttons.forEach(btn => btn.addEventListener("click", () => {
+    const g = btn.dataset.g;
+    activeGroup = activeGroup === g ? null : g;
+    buttons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === activeGroup)));
+    box.querySelectorAll(".w").forEach(w => w.classList.toggle("dim", !!activeGroup && w.dataset.g !== activeGroup));
+  }));
+
+  let lastW = box.clientWidth, timer;
+  window.addEventListener("resize", () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { if (box.clientWidth !== lastW) { lastW = box.clientWidth; layout(); } }, 200);
+  });
+
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(layout);
+</script>
+</body>
+</html>
