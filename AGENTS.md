@@ -8,3 +8,7 @@ Este projeto manipula arquivos rodando no Render (Plano Free). Nunca adicione co
 
 Exemplo:
 `Gemini | João | Mesclei 2 arquivos e substitui o placeholder em dados.json`
+
+3. **Todas as páginas precisam ter o mesmo estilo geral. Mas pode deixar a interface de moderamento e aprovação mais básica sem necessidade de deixar bonito**
+4. **A senha placeholder:** Durante este período de desenvolvimento, a senha de moderamento (em /public/moderar.html) é "erer2026". Iremos trocar no dia 25/11 e não é a senha final. Apenas usada para desenvolvimento.
+5. **O endereço é:** "https://trabalho-feira-erer.onrender.com"
