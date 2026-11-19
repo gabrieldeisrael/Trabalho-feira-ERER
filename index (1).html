@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiz</title>
+<div id="app"></div>
+<script>
+const TEMA = 'uma palavra sobre o tema'; // ajuste o texto
+const QUIZ = [
+  { p: 'Pergunta placeholder 1?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 0 },
+  { p: 'Pergunta placeholder 2?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 1 },
+  { p: 'Pergunta placeholder 3?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 2 },
+  { p: 'Pergunta placeholder 4?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 0 },
+  { p: 'Pergunta placeholder 5?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 1 },
+]; // sem "certa" = pergunta de opinião (não conta ponto)
+const app = document.getElementById('app');
+let i = 0, pts = 0;
+
+function pergunta() {
+  if (i >= QUIZ.length) return palavra();
+  const q = QUIZ[i];
+  app.innerHTML = '';
+  const h = document.createElement('h2');
+  h.textContent = q.p;
+  app.append(h);
+  q.o.forEach((t, k) => {
+    const b = document.createElement('button');
+    b.textContent = t;
+    b.style.display = 'block';
+    b.onclick = () => { if (k === q.certa) pts++; i++; pergunta(); };
+    app.append(b);
+  });
+}
+
+function palavra() {
+  if (localStorage.enviou) { app.textContent = 'Valeu! Olha a TV.'; return; }
+  const placar = QUIZ.some(q => 'certa' in q) ? '<h2>Pontos: ' + pts + '</h2>' : '';
+  app.innerHTML = placar + '<p>Agora, ' + TEMA + ':</p><input id="t" maxlength="30"> <button id="e">Enviar</button>';
+  document.getElementById('e').onclick = async () => {
+    const texto = document.getElementById('t').value;
+    const r = await fetch('/api/palavras', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    });
+    if (r.ok) { localStorage.enviou = 1; app.textContent = 'Valeu! Olha a TV.'; }
+  };
+}
+pergunta();
+</script>

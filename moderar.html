@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moderação</title>
+<h1>Moderação</h1>
+<ul id="l"></ul>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const S = sessionStorage.senha || (sessionStorage.senha = prompt('Senha'));
+const h = { 'x-senha': S, 'Content-Type': 'application/json' };
+
+async function carregar() {
+  const r = await fetch('/api/pendentes', { headers: h });
+  if (r.status === 401) { sessionStorage.clear(); return location.reload(); }
+  const l = document.getElementById('l');
+  l.innerHTML = '';
+  for (const p of await r.json()) {
+    const li = document.createElement('li');
+    li.append(p.texto + ' (' + p.n + 'x) ');
+    for (const [rot, ap] of [['✅', true], ['❌', false]]) {
+      const b = document.createElement('button');
+      b.textContent = rot;
+      b.onclick = () => fetch('/api/moderar', { method: 'POST', headers: h, body: JSON.stringify({ texto: p.texto, aprovar: ap }) });
+      li.append(b);
+    }
+    l.append(li);
+  }
+}
+io().on('atualizar', carregar);
+carregar();
+</script>

@@ -1,0 +1,29 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Nuvem</title>
+<body style="margin:0;background:#000">
+<canvas id="c"></canvas>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+<script>
+const c = document.getElementById('c');
+async function desenhar() {
+  c.width = innerWidth;
+  c.height = innerHeight;
+  const d = await (await fetch('/api/nuvem')).json();
+  if (!d.length) return;
+  WordCloud(c, {
+    list: d.map(x => [x.texto, x.n]),
+    weightFactor: n => 30 + n * 15,
+    backgroundColor: '#000',
+    color: 'random-light',
+    rotateRatio: 0.2,
+    shrinkToFit: true,
+  });
+}
+const s = io();
+s.on('atualizar', desenhar);
+setInterval(() => s.emit('hb'), 240000);
+addEventListener('resize', desenhar);
+desenhar();
+</script>
