@@ -112,56 +112,56 @@ const TEMA = 'uma palavra sobre racismo, preconceito e discriminação';
 // "id" é fixo: as estatísticas usam esse número, não a ordem em que a pergunta aparece.
 // "t" = tema do selo, "y" = explicação mostrada depois da resposta.
 const QUIZ = [
-  { id: 1, p: ENUNCIADOS[1], t: 'Racismo', y: 'Racismo não é só uma opinião individual: é um sistema de ideias e práticas que produz desigualdade entre grupos raciais.', o: [
-    'Um sistema de ideias e práticas que produz desigualdade entre grupos raciais',
-    'Uma opinião negativa sobre alguém sem conhecê-lo',
-    'Um ato isolado de violência entre duas pessoas',
-    'A preferência por determinada religião'], certa: 0 },
-  { id: 2, p: ENUNCIADOS[2], t: 'Preconceito', y: 'Preconceito é o julgamento feito antes de conhecer; discriminação é a ação que nega direitos. A ideia vem primeiro, a atitude prejudicial vem depois.', o: [
-    'Preconceito é a ação e discriminação é a ideia',
-    'Preconceito só existe entre estrangeiros',
-    'Preconceito e discriminação são sinônimos',
-    'Preconceito é um julgamento antes de conhecer; discriminação é a ação que nega direitos'], certa: 3 },
-  { id: 3, p: ENUNCIADOS[3], t: 'Racismo', y: 'O racismo estrutural está nas regras, instituições e hábitos da sociedade. Por isso a desigualdade se mantém mesmo sem intenção declarada.', o: [
-    'Racismo presente apenas em leis antigas',
-    'Racismo embutido em regras, instituições e hábitos, que gera desigualdade mesmo sem intenção declarada',
-    'Racismo praticado somente por pessoas más',
-    'Racismo que acontece apenas na escola'], certa: 1 },
-  { id: 4, p: ENUNCIADOS[4], t: 'Racismo', y: 'A Constituição de 1988 classifica o racismo como crime inafiançável e imprescritível: não cabe fiança e o crime não prescreve com o tempo.', o: [
-    'É crime inafiançável e imprescritível',
-    'É contravenção punida com multa',
-    'O racismo não é citado na Constituição',
-    'Só é crime se houver agressão física'], certa: 0 },
-  { id: 5, p: ENUNCIADOS[5], t: 'Racismo', y: 'A Lei 7.716/89, chamada de Lei Caó, define os crimes resultantes de preconceito de raça, cor, etnia, religião ou procedência nacional.', o: [
-    'Torna obrigatório o ensino de história afro-brasileira',
-    'Cria cotas em universidades',
-    'Define os crimes resultantes de preconceito de raça, cor, etnia, religião ou procedência nacional',
-    'Cria o Dia da Consciência Negra'], certa: 2 },
-  { id: 6, p: ENUNCIADOS[6], t: 'Racismo', y: 'A Lei 14.532/2023 equiparou a injúria racial ao crime de racismo e aumentou as penas.', o: [
-    'Tornou o crime de racismo prescritível',
-    'Acabou com a Lei Caó',
-    'Acabou com as cotas nas universidades',
-    'Equiparou a injúria racial ao crime de racismo e aumentou as penas'], certa: 3 },
-  { id: 7, p: ENUNCIADOS[7], t: 'Discriminação', y: 'Negar participação a alguém por causa da raça é discriminação: é uma ação que exclui, não apenas uma opinião.', o: [
-    'Discriminação, porque é uma ação que nega participação por causa da raça',
-    'Preconceito, porque é apenas uma opinião',
-    'Racismo recreativo, porque é uma brincadeira',
-    'Nenhuma das anteriores'], certa: 0 },
-  { id: 8, p: ENUNCIADOS[8], t: 'Racismo', y: 'A Lei 10.639/2003 torna obrigatório o ensino de história e cultura afro-brasileira nas escolas.', o: [
-    'Cria o feriado de 20 de novembro',
-    'O ensino obrigatório de história e cultura afro-brasileira nas escolas',
-    'Cria cotas em universidades e concursos',
-    'Cria o Disque 100'], certa: 1 },
-  { id: 9, p: ENUNCIADOS[9], t: 'Racismo', y: 'Ações afirmativas buscam corrigir desigualdades históricas e ampliar oportunidades para grupos que foram excluídos.', o: [
-    'Dar vantagens permanentes a um grupo',
-    'Corrigir desigualdades históricas e ampliar oportunidades para grupos excluídos',
-    'Substituir o vestibular das universidades',
-    'Reduzir o número de vagas oferecidas'], certa: 1 },
-  { id: 10, p: ENUNCIADOS[10], t: 'Racismo', y: '20 de novembro é o Dia da Consciência Negra, data que lembra a morte de Zumbi dos Palmares e a resistência negra.', o: [
-    'É o dia da promulgação da Constituição de 1988',
-    'É o dia da Abolição da Escravidão no Brasil',
-    'É o Dia da Consciência Negra, em lembrança da morte de Zumbi dos Palmares',
-    'É o dia do Disque 100'], certa: 2 },
+  { id: 1, p: ENUNCIADOS[1], t: 'Preconceito', y: 'Preconceito é um julgamento prévio, baseado em estereótipos, feito sem conhecer a pessoa. Ele existe nas ideias — ainda não é, necessariamente, uma ação.', o: [
+    'Uma opinião ou ideia formada antes de conhecer a pessoa, sem base em fatos',
+    'Uma lei que proíbe certos grupos de entrar em lugares',
+    'Uma agressão física contra alguém',
+    'Uma diferença de cultura entre dois países'], certa: 0 },
+  { id: 2, p: ENUNCIADOS[2], t: 'Preconceito', y: 'Generalizar que “todo jovem” é de um jeito é um estereótipo: atribui a um grupo inteiro uma característica, sem conhecer cada pessoa.', o: [
+      '“Vou estudar a história de diferentes povos.”',
+      '“Cada pessoa deve ser avaliada pelo que faz.”',
+      '“Quero conhecer meu novo colega.”',
+      '“Todo jovem é irresponsável.”'], certa: 3 },
+  { id: 3, p: ENUNCIADOS[3], t: 'Preconceito', y: 'O preconceito molda a forma como enxergamos os outros e pode se transformar em atitudes injustas — ou seja, em discriminação.', o: [
+    'Porque ele nunca influencia o comportamento de ninguém',
+    'Porque pode orientar escolhas e virar discriminação',
+    'Porque só existe em países pequenos',
+    'Porque é sempre crime'], certa: 1 },
+  { id: 4, p: ENUNCIADOS[4], t: 'Discriminação', y: 'Discriminação é tratar alguém de forma desigual ou injusta por pertencer a um grupo. É o preconceito colocado em prática.', o: [
+    'Recusar uma vaga de emprego a alguém por causa da sua cor, religião ou origem',
+    'Achar que um grupo é preguiçoso, mas não falar nada a ninguém',
+    'Conhecer pessoas de várias culturas',
+    'Discordar de uma opinião em um debate respeitoso'], certa: 0 },
+  { id: 5, p: ENUNCIADOS[5], t: 'Discriminação', y: 'O preconceito está no pensamento, no julgamento prévio. A discriminação acontece quando esse julgamento vira uma atitude que prejudica alguém.', o: [
+    'Não existe diferença nenhuma',
+    'Preconceito é uma ação; discriminação é um pensamento',
+    'Preconceito é a ideia ou julgamento; discriminação é a ação que prejudica',
+    'Preconceito só acontece na escola'], certa: 2 },
+  { id: 6, p: ENUNCIADOS[6], t: 'Discriminação', y: 'Negar um direito, como a matrícula, por causa de uma característica da pessoa é discriminação, e a lei brasileira proíbe esse tipo de conduta.', o: [
+    'Uma regra normal da escola',
+    'Um preconceito que ainda não virou ação',
+    'Uma opinião pessoal sem consequências',
+    'Discriminação, e é proibida por lei'], certa: 3 },
+  { id: 7, p: ENUNCIADOS[7], t: 'Racismo', y: 'Racismo é a crença de que existem raças superiores e inferiores, usada para justificar desigualdade e violência contra certos grupos. Está ligado a séculos de história, como a escravidão.', o: [
+    'Acreditar que há raças superiores a outras e usar isso para tratar pessoas de forma desigual',
+    'Gostar de conhecer culturas diferentes',
+    'Discordar de alguém em uma conversa',
+    'Brigar com um colega de classe'], certa: 0 },
+  { id: 8, p: ENUNCIADOS[8], t: 'Racismo', y: 'A Constituição de 1988 define a prática do racismo como crime inafiançável e imprescritível: não dá para pagar fiança e o crime não “expira” com o tempo.', o: [
+    'Apenas uma ofensa moral',
+    'Crime inafiançável e imprescritível',
+    'Uma simples brincadeira',
+    'Liberdade de expressão'], certa: 1 },
+  { id: 9, p: ENUNCIADOS[9], t: 'Racismo', y: 'O racismo estrutural aparece em desigualdades de renda, educação, moradia e segurança que se repetem por gerações. Ele funciona mesmo quando ninguém age com a intenção declarada de discriminar.', o: [
+    'Que ele só acontece em obras e construções',
+    'Que as desigualdades raciais estão presentes nas instituições e práticas da sociedade, mesmo sem intenção individual',
+    'Que ele desapareceu depois da abolição da escravidão',
+    'Que ele só existe quando alguém xinga de forma explícita'], certa: 1 },
+  { id: 10, p: ENUNCIADOS[10], t: 'Os três juntos', y: '(1) Achar que são “menos capazes” é preconceito: uma ideia pré-formada. (2) Não chamar para entrevista é discriminação: a ação que prejudica. (3) Afirmar que um grupo é inferior pela cor é racismo: a crença em hierarquia entre raças. Os três se alimentam: o preconceito gera discriminação, e o racismo dá base para ambos.', o: [
+    '1 = racismo, 2 = preconceito, 3 = discriminação',
+    '1 = discriminação, 2 = racismo, 3 = preconceito',
+    '1 = preconceito, 2 = discriminação, 3 = racismo',
+    '1, 2 e 3 são a mesma coisa e não têm diferença'], certa: 2 },
 ]; // sem "certa" (índice -1) = pergunta de opinião, não conta ponto
 const TOTAL = QUIZ.filter(q => q.certa >= 0).length;
 const $ = id => document.getElementById(id);
