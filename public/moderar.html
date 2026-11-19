@@ -2,30 +2,101 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Moderação</title>
+<style>
+  body { margin: 0 auto; max-width: 720px; padding: 32px 20px; color: #181c33;
+         font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
+  h2 { margin-top: 28px; }
+  li { padding: 4px 0; }
+  input { font: inherit; border: 2px solid #cfd4e6; border-radius: 8px; padding: 9px 12px; }
+  button { font: inherit; font-weight: 600; background: #3a4db5; color: #fff; border: 0;
+           border-radius: 8px; padding: 8px 14px; cursor: pointer; margin-left: 4px; }
+  #painel[hidden], #login[hidden] { display: none; }
+  .erro { color: #c2331f; }
+</style>
 <h1>Moderação</h1>
-<ul id="l"></ul>
+<div id="login">
+  <label for="senha">Senha:</label>
+  <input id="senha" type="password" autocomplete="current-password">
+  <button id="entrar">Entrar</button>
+  <p id="msg" class="erro"></p>
+</div>
+<div id="painel" hidden>
+  <h2>Palavras pendentes</h2>
+  <ul id="pendentes"></ul>
+  <h2>Na nuvem</h2>
+  <ul id="aprovadas"></ul>
+</div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const S = sessionStorage.senha || (sessionStorage.senha = prompt('Senha'));
-const h = { 'x-senha': S, 'Content-Type': 'application/json' };
+const $ = id => document.getElementById(id);
+let S = sessionStorage.senha || '';
 
-async function carregar() {
-  const r = await fetch('/api/pendentes', { headers: h });
-  if (r.status === 401) { sessionStorage.clear(); return location.reload(); }
-  const l = document.getElementById('l');
-  l.innerHTML = '';
-  for (const p of await r.json()) {
+function mostrarLogin(mensagem) {
+  $('msg').textContent = mensagem || '';
+  $('senha').value = '';
+  $('login').hidden = false;
+  $('painel').hidden = true;
+}
+
+function entrar() {
+  S = $('senha').value.trim();
+  sessionStorage.senha = S;
+  $('login').hidden = true;
+  $('painel').hidden = false;
+  carregar();
+}
+
+function lista(id, itens, botoes) {
+  const ul = $(id);
+  ul.innerHTML = '';
+  for (const p of itens) {
     const li = document.createElement('li');
     li.append(p.texto + ' (' + p.n + 'x) ');
-    for (const [rot, ap] of [['✅', true], ['❌', false]]) {
+    for (const [rot, acao] of botoes) {
       const b = document.createElement('button');
       b.textContent = rot;
-      b.onclick = () => fetch('/api/moderar', { method: 'POST', headers: h, body: JSON.stringify({ texto: p.texto, aprovar: ap }) });
+      b.onclick = () => acao(p.texto);
       li.append(b);
     }
-    l.append(li);
+    ul.append(li);
   }
 }
+
+async function carregar() {
+  if (!S) return mostrarLogin();
+  const h = { 'x-senha': S, 'Content-Type': 'application/json' };
+  try {
+    const [rp, ra] = await Promise.all([
+      fetch('/api/pendentes', { headers: h }),
+      fetch('/api/aprovadas', { headers: h }),
+    ]);
+    if (rp.status === 401 || ra.status === 401) {
+      sessionStorage.removeItem('senha');
+      S = '';
+      return mostrarLogin('Senha incorreta.');
+    }
+    if (!rp.ok || !ra.ok) return;
+    const [pendentes, aprovadas] = await Promise.all([rp.json(), ra.json()]);
+
+    lista('pendentes', pendentes, [
+      ['✅', texto => fetch('/api/moderar', { method: 'POST', headers: h, body: JSON.stringify({ texto, aprovar: true }) })],
+      ['❌', texto => fetch('/api/moderar', { method: 'POST', headers: h, body: JSON.stringify({ texto, aprovar: false }) })],
+    ]);
+    lista('aprovadas', aprovadas, [
+      ['🗑️', async texto => {
+        await fetch('/api/excluir', { method: 'POST', headers: h, body: JSON.stringify({ texto }) });
+        carregar();
+      }],
+    ]);
+  } catch (e) {
+    $('msg').textContent = 'Não foi possível carregar. Tente entrar de novo.';
+  }
+}
+
+$('entrar').onclick = entrar;
+$('senha').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
 io().on('atualizar', carregar);
-carregar();
+if (S) { $('painel').hidden = false; carregar(); } else mostrarLogin();
 </script>
+</body>
+</html>

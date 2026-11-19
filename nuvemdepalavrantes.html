@@ -61,6 +61,7 @@
   .g-p { color: var(--p); }
   .g-r { color: var(--r); font-weight: 600; }
   .g-l { color: var(--l); font-weight: 600; }
+  .empty { color: var(--muted); font-size: .95rem; padding: 24px 4px; }
 
   #tip {
     position: fixed; z-index: 50; left: 0; top: 0; width: max-content; max-width: min(300px, calc(100vw - 16px));
@@ -85,7 +86,7 @@
 <body>
 <main class="wrap">
   <h1>Racismo, preconceito e discriminação</h1>
-  <p class="sub">As palavras do problema, as palavras da lei e as palavras que usamos para enfrentá-lo. Passe o mouse (ou toque) em uma palavra para ver o que ela significa.</p>
+  <p class="sub">As palavras da turma, aprovadas na moderação. Passe o mouse (ou toque) em uma palavra para ver o que ela significa.</p>
 
   <div class="legend" role="group" aria-label="Filtrar por grupo">
     <button type="button" data-g="p" aria-pressed="false"><span>O que machuca</span></button>
@@ -105,11 +106,13 @@
   <p class="note"><strong>No Brasil, racismo é crime inafiançável e imprescritível</strong> (Constituição Federal, art. 5º, XLII). Para denunciar violações de direitos humanos, ligue para o Disque 100.</p>
 </main>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
   const GROUPS = { p: "O que machuca", r: "O que construímos", l: "O que a lei diz" };
 
-  // [palavra, peso (1–100), grupo, explicação]
-  const WORDS = [
+  // Dicionário de apoio: [palavra, peso, grupo, explicação].
+  // As palavras exibidas vêm de /api/nuvem; esta lista só dá grupo e definição às que coincidirem.
+  const DICIO = [
     // ---- O que machuca ----
     ["racismo",100,"p","Tratar pessoas de forma desigual por causa da raça ou da cor da pele, em atitudes e também nas estruturas da sociedade."],
     ["discriminação",92,"p","Ação que nega direitos, oportunidades ou respeito a alguém por pertencer a um grupo."],
@@ -224,18 +227,28 @@
   const tip = document.getElementById("tip");
   const buttons = document.querySelectorAll(".legend button");
   const GROUP_VAR = { p: "var(--p)", r: "var(--r)", l: "var(--l)" };
+  const INFO = new Map(DICIO.map(([texto, , g, def]) => [texto, { g, def }]));
   const MIN_FS = 11;
   let activeGroup = null;
+  let palavras = [];
+
+  function vazio(texto) {
+    box.innerHTML = "";
+    const el = document.createElement("p");
+    el.className = "empty";
+    el.textContent = texto;
+    box.append(el);
+  }
 
   /* ---------- Tooltip ---------- */
   function showTip(el) {
-    const [text, , g, def] = WORDS[+el.dataset.i];
+    const d = el._d;
     tip.innerHTML = "";
-    const b = document.createElement("b"); b.textContent = text;
-    const s = document.createElement("small"); s.textContent = GROUPS[g];
-    const p = document.createElement("p"); p.textContent = def;
+    const b = document.createElement("b"); b.textContent = d.texto;
+    const s = document.createElement("small"); s.textContent = d.g ? GROUPS[d.g] : "Da turma";
+    const p = document.createElement("p"); p.textContent = d.def;
     tip.append(b, s, p);
-    tip.style.setProperty("--c", GROUP_VAR[g]);
+    tip.style.setProperty("--c", d.g ? GROUP_VAR[d.g] : "var(--l)");
     tip.classList.add("show");
     const r = el.getBoundingClientRect();
     const tw = tip.offsetWidth, th = tip.offsetHeight;
@@ -257,23 +270,48 @@
   document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); });
   window.addEventListener("scroll", hideTip, { passive: true });
 
+  /* ---------- Dados em tempo real ---------- */
+  async function carregar() {
+    try {
+      const r = await fetch('/api/nuvem');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const dados = await r.json();
+      palavras = dados.map(d => {
+        const info = INFO.get(d.texto);
+        return {
+          texto: d.texto,
+          n: d.n,
+          g: info ? info.g : "",
+          def: info ? info.def : `Palavra enviada por ${d.n} ${d.n === 1 ? "pessoa" : "pessoas"} na atividade da turma.`,
+        };
+      }).sort((a, b) => b.n - a.n);
+      layout();
+    } catch (e) {
+      palavras = [];
+      vazio("Não foi possível carregar as palavras. Tente recarregar a página.");
+    }
+  }
+
   /* ---------- Layout em espiral ---------- */
   function run(scale, W, H) {
     box.innerHTML = "";
+    if (!palavras.length) { vazio("Aguardando as primeiras palavras aprovadas..."); return 0; }
     const placed = [];
     const pad = 4;
     const cx = W / 2, cy = H / 2, aspect = W / H, maxR = Math.hypot(W, H);
     let dropped = 0;
 
-    WORDS.map((w, i) => ({ w, i })).sort((a, b) => b.w[1] - a.w[1]).forEach(({ w: [text, weight, group], i }) => {
+    palavras.forEach(d => {
       const el = document.createElement("span");
-      el.className = "w g-" + group;
-      el.dataset.i = i; el.dataset.g = group;
+      el.className = "w" + (d.g ? " g-" + d.g : "");
+      el._d = d;
+      el.dataset.g = d.g;
       el.tabIndex = 0;
-      el.textContent = text;
+      el.textContent = d.texto;
       box.appendChild(el);
 
-      let fs = Math.max(MIN_FS, (12 + Math.pow(weight / 100, 1.2) * 86) * scale);
+      const peso = Math.min(100, 14 + 17 * d.n);
+      let fs = Math.max(MIN_FS, (12 + Math.pow(peso / 100, 1.2) * 86) * scale);
       let done = false;
 
       for (let attempt = 0; attempt < 3 && !done; attempt++) {
@@ -311,6 +349,7 @@
   function layout() {
     hideTip();
     const W = box.clientWidth;
+    if (!W) return;
     const H = W < 600 ? Math.round(W * 2.4) : Math.round(Math.min(W * 0.68, 780));
     box.style.height = H + "px";
 
@@ -320,7 +359,7 @@
     while (dropped > 0 && scale > 0.3) { scale *= 0.92; dropped = run(scale, W, H); }
 
     box.querySelectorAll(".w").forEach((el, k) => {
-      if (activeGroup && el.dataset.g !== activeGroup) el.classList.add("dim");
+      if (activeGroup && el.dataset.g && el.dataset.g !== activeGroup) el.classList.add("dim");
       setTimeout(() => el.classList.add("in"), k * 14);
     });
   }
@@ -329,7 +368,7 @@
     const g = btn.dataset.g;
     activeGroup = activeGroup === g ? null : g;
     buttons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === activeGroup)));
-    box.querySelectorAll(".w").forEach(w => w.classList.toggle("dim", !!activeGroup && w.dataset.g !== activeGroup));
+    box.querySelectorAll(".w").forEach(w => w.classList.toggle("dim", !!activeGroup && !!w.dataset.g && w.dataset.g !== activeGroup));
   }));
 
   let lastW = box.clientWidth, timer;
@@ -338,7 +377,11 @@
     timer = setTimeout(() => { if (box.clientWidth !== lastW) { lastW = box.clientWidth; layout(); } }, 200);
   });
 
-  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(layout);
+  const s = io();
+  s.on('atualizar', carregar);
+  setInterval(() => s.emit('hb'), 240000);
+
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(carregar);
 </script>
 </body>
 </html>

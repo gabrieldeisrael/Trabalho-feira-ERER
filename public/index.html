@@ -2,6 +2,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Quiz</title>
+<style>
+  body { margin: 0 auto; max-width: 680px; padding: 32px 20px; color: #181c33;
+         font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
+  .num { color: #5a6082; font-weight: 600; }
+  h2 { line-height: 1.2; }
+  button { font: inherit; font-weight: 600; background: #3a4db5; color: #fff; border: 0;
+           border-radius: 8px; padding: 10px 18px; cursor: pointer; margin: 4px 6px 4px 0; }
+  input { font: inherit; border: 2px solid #cfd4e6; border-radius: 8px; padding: 9px 12px; }
+</style>
 <div id="app"></div>
 <script>
 const TEMA = 'uma palavra sobre o tema'; // ajuste o texto
@@ -12,38 +21,85 @@ const QUIZ = [
   { p: 'Pergunta placeholder 4?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 0 },
   { p: 'Pergunta placeholder 5?', o: ['Opção A', 'Opção B', 'Opção C'], certa: 1 },
 ]; // sem "certa" = pergunta de opinião (não conta ponto)
+const TOTAL = QUIZ.filter(q => 'certa' in q).length;
 const app = document.getElementById('app');
-let i = 0, pts = 0;
+let i = 0, pts = 0, numero = null;
+
+async function iniciar() {
+  numero = sessionStorage.numero;
+  if (!numero) {
+    const r = await fetch('/api/participantes', { method: 'POST' });
+    const d = await r.json();
+    numero = d.numero;
+    sessionStorage.numero = numero;
+  }
+  if (sessionStorage.enviou) return final();
+  pergunta();
+}
+
+function cabecalho() { return '<p class="num">Participante #' + numero + '</p>'; }
 
 function pergunta() {
   if (i >= QUIZ.length) return palavra();
   const q = QUIZ[i];
-  app.innerHTML = '';
+  app.innerHTML = cabecalho();
   const h = document.createElement('h2');
   h.textContent = q.p;
   app.append(h);
   q.o.forEach((t, k) => {
     const b = document.createElement('button');
     b.textContent = t;
-    b.style.display = 'block';
-    b.onclick = () => { if (k === q.certa) pts++; i++; pergunta(); };
+    b.onclick = async () => {
+      if ('certa' in q) {
+        const acertou = k === q.certa;
+        if (acertou) pts++;
+        try {
+          await fetch('/api/respostas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ numero: Number(numero), pergunta: i, acertou }),
+          });
+        } catch (e) { /* segue o quiz mesmo se a rede falhar */ }
+      }
+      i++;
+      pergunta();
+    };
     app.append(b);
   });
 }
 
-function palavra() {
-  if (localStorage.enviou) { app.textContent = 'Valeu! Olha a TV.'; return; }
-  const placar = QUIZ.some(q => 'certa' in q) ? '<h2>Pontos: ' + pts + '</h2>' : '';
-  app.innerHTML = placar + '<p>Agora, ' + TEMA + ':</p><input id="t" maxlength="30"> <button id="e">Enviar</button>';
-  document.getElementById('e').onclick = async () => {
-    const texto = document.getElementById('t').value;
-    const r = await fetch('/api/palavras', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texto }),
-    });
-    if (r.ok) { localStorage.enviou = 1; app.textContent = 'Valeu! Olha a TV.'; }
+function final() {
+  app.innerHTML = cabecalho() + '<h2>Valeu! Seu número é #' + numero + '.</h2>' +
+    '<p>Olha a nuvem na TV.</p><button id="novo">Próxima pessoa</button>';
+  document.getElementById('novo').onclick = () => {
+    sessionStorage.removeItem('numero');
+    sessionStorage.removeItem('enviou');
+    location.reload();
   };
 }
-pergunta();
+
+function palavra() {
+  const placar = TOTAL ? '<h2>Pontos: ' + pts + ' de ' + TOTAL + '</h2>' : '';
+  app.innerHTML = cabecalho() + placar +
+    '<p>Agora, ' + TEMA + ':</p><input id="t" maxlength="30" placeholder="Escreva uma palavra"> <button id="e">Enviar</button>';
+  document.getElementById('e').onclick = async () => {
+    const texto = document.getElementById('t').value;
+    const b = document.getElementById('e');
+    b.disabled = true;
+    try {
+      const r = await fetch('/api/palavras', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto, numero: Number(numero) }),
+      });
+      if (!r.ok) throw new Error('falhou');
+      sessionStorage.enviou = '1';
+      final();
+    } catch (e) {
+      b.disabled = false;
+      b.textContent = 'Tentar de novo';
+    }
+  };
+}
+iniciar();
 </script>

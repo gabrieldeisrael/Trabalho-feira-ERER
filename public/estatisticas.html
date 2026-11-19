@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estatísticas do Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#eef0f6; --card:#fff; --ink:#181c33; --muted:#5a6082; --line:#cfd4e6;
+          --p:#c2331f; --r:#0d7a6a; --l:#3a4db5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#11152b; --card:#1d2247; --ink:#eceffa; --muted:#9aa2c8; --line:#2a3057;
+            --p:#ff7d66; --r:#52d6ba; --l:#93a5ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.5; }
+  .wrap { max-width:1000px; margin:0 auto; padding:40px 20px 56px; }
+  h1 { font-size:clamp(1.9rem,5vw,3rem); font-weight:800; line-height:1.05; margin:0 0 6px; }
+  .sub { color:var(--muted); margin:0 0 28px; }
+  h2 { font-size:1.3rem; margin:32px 0 12px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  .card b { display:block; font-size:2rem; line-height:1.1; color:var(--l); }
+  .card span { color:var(--muted); font-size:.9rem; }
+  .barra { margin:10px 0; }
+  .barra .rotulo { display:flex; justify-content:space-between; gap:12px; font-size:.92rem; }
+  .trilha { height:10px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:4px; }
+  .trilha i { display:block; height:100%; background:var(--r); border-radius:99px; }
+  ol { margin:0; padding-left:26px; }
+  li { padding:3px 0; }
+  .rank { display:flex; justify-content:space-between; gap:12px; }
+  .rank b { color:var(--l); }
+  .busca { display:flex; flex-wrap:wrap; gap:8px; }
+  input { font:inherit; border:2px solid var(--line); border-radius:8px; padding:9px 12px; background:var(--card); color:var(--ink); width:160px; }
+  button { font:inherit; font-weight:600; background:var(--l); color:#fff; border:0; border-radius:8px; padding:9px 18px; cursor:pointer; }
+  #resultado { margin-top:14px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  #resultado h3 { margin:0 0 8px; }
+  .vazio { color:var(--muted); }
+  .certo { color:var(--r); font-weight:700; }
+  .errado { color:var(--p); font-weight:700; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Estatísticas do Quiz</h1>
+  <p class="sub">Acompanhe as respostas da turma. Digite seu número para ver o seu resultado.</p>
+
+  <div class="cards" id="cards"></div>
+
+  <h2>Perguntas mais acertadas</h2>
+  <div id="perguntas" class="vazio">Aguardando respostas...</div>
+
+  <h2>Quem acertou mais</h2>
+  <ol id="ranking" class="vazio"></ol>
+
+  <h2>Meu resultado</h2>
+  <div class="busca">
+    <input id="numero" inputmode="numeric" placeholder="Número" aria-label="Número do participante">
+    <button id="buscar">Buscar</button>
+  </div>
+  <div id="resultado" class="vazio">Digite o número que você recebeu no quiz.</div>
+</main>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let totalPerguntas = 0;
+
+function card(valor, rotulo) {
+  const d = document.createElement('div');
+  d.className = 'card';
+  const b = document.createElement('b'); b.textContent = valor;
+  const s = document.createElement('span'); s.textContent = rotulo;
+  d.append(b, s);
+  return d;
+}
+
+async function carregar() {
+  try {
+    const d = await (await fetch('/api/stats')).json();
+    totalPerguntas = d.totalPerguntas;
+    const t = d.totais;
+    $('cards').innerHTML = '';
+    $('cards').append(
+      card(t.participantes, 'pessoas responderam'),
+      card(t.palavras, 'palavras enviadas'),
+      card(t.aprovadas, 'palavras na nuvem')
+    );
+
+    const perguntas = d.perguntas.slice().sort((a, b) => {
+      const pa = a.respondidas ? a.acertos / a.respondidas : 0;
+      const pb = b.respondidas ? b.acertos / b.respondidas : 0;
+      return pb - pa;
+    });
+    $('perguntas').innerHTML = '';
+    $('perguntas').classList.remove('vazio');
+    if (!perguntas.length) $('perguntas').textContent = 'Aguardando respostas...';
+    for (const p of perguntas) {
+      const pct = p.respondidas ? Math.round(p.acertos / p.respondidas * 100) : 0;
+      const bloco = document.createElement('div');
+      bloco.className = 'barra';
+      const rotulo = document.createElement('div');
+      rotulo.className = 'rotulo';
+      const nome = document.createElement('span'); nome.textContent = 'Pergunta ' + (p.pergunta + 1);
+      const valor = document.createElement('span'); valor.textContent = p.acertos + '/' + p.respondidas + ' (' + pct + '%)';
+      rotulo.append(nome, valor);
+      const trilha = document.createElement('div'); trilha.className = 'trilha';
+      const barra = document.createElement('i'); barra.style.width = pct + '%';
+      trilha.append(barra);
+      bloco.append(rotulo, trilha);
+      $('perguntas').append(bloco);
+    }
+
+    $('ranking').innerHTML = '';
+    $('ranking').classList.toggle('vazio', !d.ranking.length);
+    for (const p of d.ranking.slice(0, 15)) {
+      const li = document.createElement('li');
+      const linha = document.createElement('div'); linha.className = 'rank';
+      const num = document.createElement('b'); num.textContent = '#' + p.numero;
+      const pts = document.createElement('span'); pts.textContent = p.acertos + '/' + totalPerguntas + ' acertos';
+      linha.append(num, pts);
+      li.append(linha);
+      $('ranking').append(li);
+    }
+  } catch (e) {
+    $('cards').textContent = 'Não foi possível carregar as estatísticas.';
+  }
+}
+
+const SITUACAO = { aprovada: 'na nuvem', pendente: 'aguardando moderação', rejeitada: 'rejeitada', excluida: 'removida da nuvem' };
+
+async function buscar() {
+  const n = $('numero').value.trim();
+  const res = $('resultado');
+  if (!/^\d+$/.test(n)) { res.textContent = 'Digite um número válido.'; return; }
+  try {
+    const r = await fetch('/api/participantes/' + encodeURIComponent(n));
+    if (r.status === 404) { res.textContent = 'Número não encontrado.'; return; }
+    const d = await r.json();
+    res.innerHTML = '';
+    res.classList.remove('vazio');
+    const titulo = document.createElement('h3'); titulo.textContent = 'Participante #' + d.numero;
+    const placar = document.createElement('p');
+    const acertos = d.respostas.filter(x => x.acertou).length;
+    placar.textContent = acertos + ' acerto(s) de ' + totalPerguntas;
+    res.append(titulo, placar);
+    for (const x of d.respostas) {
+      const p = document.createElement('div');
+      p.className = x.acertou ? 'certo' : 'errado';
+      p.textContent = (x.acertou ? '✓' : '✗') + ' Pergunta ' + (x.pergunta + 1);
+      res.append(p);
+    }
+    if (d.palavra) {
+      const w = document.createElement('p');
+      w.textContent = 'Palavra: "' + d.palavra.texto + '" (' + (SITUACAO[d.palavra.status] || d.palavra.status) + ')';
+      res.append(w);
+    }
+  } catch (e) {
+    res.textContent = 'Não foi possível buscar agora.';
+  }
+}
+
+$('buscar').onclick = buscar;
+$('numero').addEventListener('keydown', e => { if (e.key === 'Enter') buscar(); });
+
+const s = io();
+s.on('stats', carregar);
+setInterval(() => s.emit('hb'), 240000);
+carregar();
+</script>
+</body>
+</html>
