@@ -1,79 +1,180 @@
-<!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz</title>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Racismo, preconceito e discriminação</title>
 <style>
-  body { margin: 0 auto; max-width: 680px; padding: 32px 20px; color: #181c33;
-         font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
-  .num { color: #5a6082; font-weight: 600; }
-  h2 { line-height: 1.2; }
-  button { font: inherit; font-weight: 600; background: #3a4db5; color: #fff; border: 0;
-           border-radius: 8px; padding: 10px 18px; cursor: pointer; margin: 4px 6px 4px 0; }
-  input { font: inherit; border: 2px solid #cfd4e6; border-radius: 8px; padding: 9px 12px; }
+:root{
+  --bg:#eeeff5; --ink:#14142b; --muted:#5f6480; --line:#c9cbdc; --surface:#f8f8fc;
+  --red:#c0392b; --green:#0f7b5f; --blue:#3447b5; --tint-ok:#dff1ea; --tint-bad:#f9e1de;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14152a; --ink:#f1f1f8; --muted:#a3a7c2; --line:#383b5c; --surface:#1d1e38;
+    --red:#ff7a6b; --green:#4cd3a8; --blue:#8fa0ff; --tint-ok:#14352d; --tint-bad:#3a1d22; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:"Helvetica Neue","Segoe UI",Arial,system-ui,sans-serif;
+  background:var(--bg); color:var(--ink);
+}
+.wrap{max-width:1080px;margin:0 auto;padding:56px 24px 80px}
+.narrow{max-width:720px}
+h1{font-size:clamp(2.2rem,7vw,4rem);line-height:1.02;letter-spacing:-.03em;font-weight:800;margin:0 0 18px}
+h2{font-size:clamp(1.3rem,3.6vw,1.9rem);line-height:1.25;letter-spacing:-.015em;font-weight:800;margin:0 0 26px}
+p{line-height:1.6;color:var(--muted);margin:0 0 20px;font-size:1.05rem}
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 28px}
+.pill{display:inline-block;font-weight:700;font-size:.9rem;color:var(--ink);border:2px solid var(--blue);border-radius:99px;padding:8px 18px;background:transparent}
+.pill[data-t="Preconceito"]{border-color:var(--red)}
+.pill[data-t="Discriminação"]{border-color:var(--green)}
+.pill[data-t="Racismo"]{border-color:var(--blue)}
+.pill[data-t="Os três juntos"]{border-color:var(--ink)}
+hr{border:0;border-top:2px solid var(--line);margin:0 0 28px}
+.btn{font:inherit;font-weight:700;background:var(--ink);color:var(--bg);border:2px solid var(--ink);border-radius:99px;padding:12px 28px;cursor:pointer}
+.btn:hover:not(:disabled){opacity:.88}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,#t:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.top{display:flex;justify-content:space-between;gap:12px;font-weight:700;color:var(--muted);font-size:.95rem;margin-bottom:10px}
+.top #num{color:var(--blue)}
+.bar{height:3px;background:var(--line);margin-bottom:30px}
+.bar i{display:block;height:100%;background:var(--blue);width:0;transition:width .4s}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.opts{grid-template-columns:1fr}}
+.opt{font:inherit;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:18px;text-align:left;cursor:pointer;display:flex;gap:14px;align-items:flex-start;line-height:1.45;font-size:1rem}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt .k{font-weight:800;min-width:1.4em}
+.opt:disabled{cursor:default}
+.opt.dim{opacity:.45}
+.opt.right{border-color:var(--green);background:var(--tint-ok);opacity:1}
+.opt.wrong{border-color:var(--red);background:var(--tint-bad);opacity:1}
+.fb{display:none;margin-top:28px;padding:4px 0 4px 18px;border-left:4px solid var(--blue);line-height:1.6;color:var(--muted);max-width:720px}
+.fb.show{display:block}
+.fb.ok{border-color:var(--green)}
+.fb.bad{border-color:var(--red)}
+.fb b{color:var(--ink);display:block;margin-bottom:2px}
+.next{display:none;margin-top:24px}
+.next.show{display:inline-block}
+.score{font-size:clamp(3rem,10vw,5.5rem);font-weight:800;letter-spacing:-.04em;line-height:1;margin:0 0 16px}
+#t{font:inherit;font-size:1.05rem;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:99px;padding:12px 20px;width:100%;max-width:460px;margin-bottom:16px}
+#t::placeholder{color:var(--muted)}
+.hidden{display:none}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
-<div id="app"></div>
+</head>
+<body>
+<main class="wrap" id="app">
+
+  <section id="start" class="narrow">
+    <h1>Racismo, preconceito e discriminação</h1>
+    <p>Três palavras que se misturam no dia a dia, mas não significam a mesma coisa. São 10 perguntas: 3 sobre cada tema, e a décima junta os três.</p>
+    <div class="pills">
+      <span class="pill" data-t="Preconceito">Preconceito</span>
+      <span class="pill" data-t="Discriminação">Discriminação</span>
+      <span class="pill" data-t="Racismo">Racismo</span>
+    </div>
+    <hr>
+    <button class="btn" id="go">Começar</button>
+  </section>
+
+  <section id="quiz" class="hidden">
+    <div class="top"><span id="num"></span><span id="count"></span><span id="pts"></span></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="pills"><span class="pill" id="topic"></span></div>
+    <h2 id="q" class="narrow"></h2>
+    <div class="opts" id="opts"></div>
+    <div class="fb" id="fb"></div>
+    <button class="btn next" id="next">Próxima</button>
+  </section>
+
+  <section id="word" class="hidden narrow">
+    <h1>Quase lá!</h1>
+    <div class="score" id="wordScore"></div>
+    <p id="wordPerg"></p>
+    <input id="t" maxlength="30" placeholder="Escreva uma palavra" autocomplete="off">
+    <div><button class="btn" id="e">Enviar</button></div>
+  </section>
+
+  <section id="end" class="hidden narrow">
+    <h1>Resultado</h1>
+    <div class="score" id="final"></div>
+    <p id="msg"></p>
+    <hr>
+    <button class="btn ghost" id="novo">Próxima pessoa</button>
+  </section>
+
+</main>
+
 <script src="/perguntas.js"></script>
 <script>
 const TEMA = 'uma palavra sobre racismo, preconceito e discriminação';
 // "id" é fixo: as estatísticas usam esse número, não a ordem em que a pergunta aparece.
+// "t" = tema do selo, "y" = explicação mostrada depois da resposta.
 const QUIZ = [
-  { id: 1, p: ENUNCIADOS[1], o: [
+  { id: 1, p: ENUNCIADOS[1], t: 'Racismo', y: 'Racismo não é só uma opinião individual: é um sistema de ideias e práticas que produz desigualdade entre grupos raciais.', o: [
     'Um sistema de ideias e práticas que produz desigualdade entre grupos raciais',
     'Uma opinião negativa sobre alguém sem conhecê-lo',
     'Um ato isolado de violência entre duas pessoas',
     'A preferência por determinada religião'], certa: 0 },
-  { id: 2, p: ENUNCIADOS[2], o: [
+  { id: 2, p: ENUNCIADOS[2], t: 'Preconceito', y: 'Preconceito é o julgamento feito antes de conhecer; discriminação é a ação que nega direitos. A ideia vem primeiro, a atitude prejudicial vem depois.', o: [
     'Preconceito é a ação e discriminação é a ideia',
     'Preconceito só existe entre estrangeiros',
     'Preconceito e discriminação são sinônimos',
     'Preconceito é um julgamento antes de conhecer; discriminação é a ação que nega direitos'], certa: 3 },
-  { id: 3, p: ENUNCIADOS[3], o: [
+  { id: 3, p: ENUNCIADOS[3], t: 'Racismo', y: 'O racismo estrutural está nas regras, instituições e hábitos da sociedade. Por isso a desigualdade se mantém mesmo sem intenção declarada.', o: [
     'Racismo presente apenas em leis antigas',
     'Racismo embutido em regras, instituições e hábitos, que gera desigualdade mesmo sem intenção declarada',
     'Racismo praticado somente por pessoas más',
     'Racismo que acontece apenas na escola'], certa: 1 },
-  { id: 4, p: ENUNCIADOS[4], o: [
+  { id: 4, p: ENUNCIADOS[4], t: 'Racismo', y: 'A Constituição de 1988 classifica o racismo como crime inafiançável e imprescritível: não cabe fiança e o crime não prescreve com o tempo.', o: [
     'É crime inafiançável e imprescritível',
     'É contravenção punida com multa',
     'O racismo não é citado na Constituição',
     'Só é crime se houver agressão física'], certa: 0 },
-  { id: 5, p: ENUNCIADOS[5], o: [
+  { id: 5, p: ENUNCIADOS[5], t: 'Racismo', y: 'A Lei 7.716/89, chamada de Lei Caó, define os crimes resultantes de preconceito de raça, cor, etnia, religião ou procedência nacional.', o: [
     'Torna obrigatório o ensino de história afro-brasileira',
     'Cria cotas em universidades',
     'Define os crimes resultantes de preconceito de raça, cor, etnia, religião ou procedência nacional',
     'Cria o Dia da Consciência Negra'], certa: 2 },
-  { id: 6, p: ENUNCIADOS[6], o: [
+  { id: 6, p: ENUNCIADOS[6], t: 'Racismo', y: 'A Lei 14.532/2023 equiparou a injúria racial ao crime de racismo e aumentou as penas.', o: [
     'Tornou o crime de racismo prescritível',
     'Acabou com a Lei Caó',
     'Acabou com as cotas nas universidades',
     'Equiparou a injúria racial ao crime de racismo e aumentou as penas'], certa: 3 },
-  { id: 7, p: ENUNCIADOS[7], o: [
+  { id: 7, p: ENUNCIADOS[7], t: 'Discriminação', y: 'Negar participação a alguém por causa da raça é discriminação: é uma ação que exclui, não apenas uma opinião.', o: [
     'Discriminação, porque é uma ação que nega participação por causa da raça',
     'Preconceito, porque é apenas uma opinião',
     'Racismo recreativo, porque é uma brincadeira',
     'Nenhuma das anteriores'], certa: 0 },
-  { id: 8, p: ENUNCIADOS[8], o: [
+  { id: 8, p: ENUNCIADOS[8], t: 'Racismo', y: 'A Lei 10.639/2003 torna obrigatório o ensino de história e cultura afro-brasileira nas escolas.', o: [
     'Cria o feriado de 20 de novembro',
     'O ensino obrigatório de história e cultura afro-brasileira nas escolas',
     'Cria cotas em universidades e concursos',
     'Cria o Disque 100'], certa: 1 },
-  { id: 9, p: ENUNCIADOS[9], o: [
+  { id: 9, p: ENUNCIADOS[9], t: 'Racismo', y: 'Ações afirmativas buscam corrigir desigualdades históricas e ampliar oportunidades para grupos que foram excluídos.', o: [
     'Dar vantagens permanentes a um grupo',
     'Corrigir desigualdades históricas e ampliar oportunidades para grupos excluídos',
     'Substituir o vestibular das universidades',
     'Reduzir o número de vagas oferecidas'], certa: 1 },
-  { id: 10, p: ENUNCIADOS[10], o: [
+  { id: 10, p: ENUNCIADOS[10], t: 'Racismo', y: '20 de novembro é o Dia da Consciência Negra, data que lembra a morte de Zumbi dos Palmares e a resistência negra.', o: [
     'É o dia da promulgação da Constituição de 1988',
     'É o dia da Abolição da Escravidão no Brasil',
     'É o Dia da Consciência Negra, em lembrança da morte de Zumbi dos Palmares',
     'É o dia do Disque 100'], certa: 2 },
 ]; // sem "certa" (índice -1) = pergunta de opinião, não conta ponto
 const TOTAL = QUIZ.filter(q => q.certa >= 0).length;
-const app = document.getElementById('app');
-let numero, ordem, i = 0, pts = 0, respostas = {};
+const $ = id => document.getElementById(id);
+const letters = ["A", "B", "C", "D"];
+let numero, ordem, i = 0, pts = 0, respostas = {}, escolha = null, respondeu = false;
 
-const salvar = () => sessionStorage.estado = JSON.stringify({ numero, ordem, i, pts, respostas });
+const salvar = () => sessionStorage.estado = JSON.stringify(
+  { numero, ordem, i, pts, respostas, escolha, respondeu });
 const ler = () => { try { return JSON.parse(sessionStorage.estado); } catch (e) { return null; } };
+
+function show(id){
+  ['start', 'quiz', 'word', 'end'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+}
 
 function embaralhar(a) {
   const b = a.slice();
@@ -87,94 +188,161 @@ function embaralhar(a) {
 function montarQuiz() {
   return embaralhar(QUIZ).map(q => {
     const opcoes = embaralhar(q.o.map((texto, k) => ({ texto, certa: k === q.certa })));
-    return { id: q.id, p: q.p, o: opcoes.map(x => x.texto), certa: opcoes.findIndex(x => x.certa) };
+    return { id: q.id, p: q.p, t: q.t, y: q.y,
+      o: opcoes.map(x => x.texto), certa: opcoes.findIndex(x => x.certa) };
   });
 }
 
-async function iniciar() {
+function iniciar() {
   const estado = ler();
-  if (estado) {
-    ({ numero, ordem, i, pts, respostas } = estado);
-    respostas = respostas || {};
-  } else {
+  if (!estado) return;
+  ({ numero, ordem, i, pts, respostas, escolha, respondeu } = estado);
+  respostas = respostas || {};
+  if (estado.enviou) return final();
+  if (i >= ordem.length) return palavra();
+  show('quiz');
+  render();
+}
+
+$('go').onclick = async () => {
+  const b = $('go');
+  b.disabled = true;
+  try {
     const r = await fetch('/api/participantes', { method: 'POST' });
     numero = (await r.json()).numero;
     ordem = montarQuiz();
-    i = 0;
-    pts = 0;
-    respostas = {};
+    i = 0; pts = 0; respostas = {}; escolha = null; respondeu = false;
     salvar();
+    show('quiz');
+    render();
+  } catch (e) {
+    b.disabled = false;
+    b.textContent = 'Tentar de novo';
   }
-  if (estado && estado.enviou) return final();
-  pergunta();
-}
+};
 
-function cabecalho() { return '<p class="num">Participante #' + numero + '</p>'; }
-
-function pergunta() {
-  if (i >= ordem.length) return palavra();
+function render() {
   const q = ordem[i];
-  app.innerHTML = cabecalho();
-  const h = document.createElement('h2');
-  h.textContent = q.p;
-  app.append(h);
-  q.o.forEach((t, k) => {
+  const total = ordem.length;
+  $('num').textContent = 'Participante #' + numero;
+  $('count').textContent = 'Pergunta ' + (i + 1) + ' de ' + total;
+  $('pts').textContent = pts + ' pt' + (pts === 1 ? '' : 's');
+  $('prog').style.width = (i / total * 100) + '%';
+  $('topic').textContent = q.t;
+  $('topic').dataset.t = q.t;
+  $('q').textContent = q.p;
+  $('fb').className = 'fb';
+  $('next').classList.remove('show');
+  const box = $('opts');
+  box.innerHTML = '';
+  q.o.forEach((texto, k) => {
     const b = document.createElement('button');
-    b.textContent = t;
-    b.onclick = async () => {
-      if (q.certa >= 0) {
-        const acertou = k === q.certa;
-        respostas[q.id] = acertou;
-        pts = Object.values(respostas).filter(Boolean).length;
-        salvar();
-        try {
-          await fetch('/api/respostas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ numero: Number(numero), pergunta: q.id, acertou }),
-          });
-        } catch (e) { /* segue o quiz mesmo se a rede falhar */ }
-      }
-      i++;
-      salvar();
-      pergunta();
-    };
-    app.append(b);
+    b.className = 'opt';
+    b.innerHTML = '<span class="k">' + letters[k] + '</span><span></span>';
+    b.lastChild.textContent = texto;
+    b.onclick = () => choose(k);
+    box.appendChild(b);
   });
+  if (respondeu && escolha !== null) feedback();
 }
 
-function final() {
-  app.innerHTML = cabecalho() + '<h2>Valeu! Seu número é #' + numero + '.</h2>' +
-    '<p>Olha a nuvem na TV.</p><button id="novo">Próxima pessoa</button>';
-  document.getElementById('novo').onclick = () => {
-    sessionStorage.removeItem('estado');
-    location.reload();
-  };
+async function choose(k) {
+  if (respondeu) return;
+  respondeu = true;
+  escolha = k;
+  const q = ordem[i];
+  respostas[q.id] = k === q.certa;
+  pts = Object.values(respostas).filter(Boolean).length;
+  salvar();
+  try {
+    await fetch('/api/respostas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero: Number(numero), pergunta: q.id, acertou: k === q.certa }),
+    });
+  } catch (e) { /* segue o quiz mesmo se a rede falhar */ }
+  feedback();
 }
+
+function feedback() {
+  const q = ordem[i];
+  const ok = escolha === q.certa;
+  $('pts').textContent = pts + ' pt' + (pts === 1 ? '' : 's');
+  [...$('opts').children].forEach((b, n) => {
+    b.disabled = true;
+    if (n === q.certa) b.classList.add('right');
+    else if (n === escolha) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  const fb = $('fb');
+  fb.className = 'fb show ' + (ok ? 'ok' : 'bad');
+  fb.innerHTML = '<b>' + (ok ? 'Correto!' : 'Não foi dessa vez.') + '</b>';
+  const span = document.createElement('span');
+  span.textContent = q.y;
+  fb.appendChild(span);
+  $('prog').style.width = ((i + 1) / ordem.length * 100) + '%';
+  $('next').textContent = i === ordem.length - 1 ? 'Ver resultado' : 'Próxima';
+  $('next').classList.add('show');
+  $('next').focus();
+}
+
+$('next').onclick = () => {
+  i++;
+  escolha = null;
+  respondeu = false;
+  salvar();
+  if (i < ordem.length) render();
+  else palavra();
+};
 
 function palavra() {
-  const placar = TOTAL ? '<h2>Pontos: ' + pts + ' de ' + TOTAL + '</h2>' : '';
-  app.innerHTML = cabecalho() + placar +
-    '<p>Agora, ' + TEMA + ':</p><input id="t" maxlength="30" placeholder="Escreva uma palavra"> <button id="e">Enviar</button>';
-  document.getElementById('e').onclick = async () => {
-    const texto = document.getElementById('t').value;
-    const b = document.getElementById('e');
-    b.disabled = true;
-    try {
-      const r = await fetch('/api/palavras', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texto, numero: Number(numero) }),
-      });
-      if (!r.ok) throw new Error('falhou');
-      const estado = ler() || {};
-      sessionStorage.estado = JSON.stringify({ ...estado, enviou: true });
-      final();
-    } catch (e) {
-      b.disabled = false;
-      b.textContent = 'Tentar de novo';
-    }
-  };
+  show('word');
+  const placar = TOTAL ? pts + ' / ' + TOTAL : '';
+  $('wordScore').textContent = placar;
+  $('wordPerg').textContent = 'Agora, ' + TEMA + ':';
+  $('t').value = '';
+  $('e').disabled = false;
+  $('e').textContent = 'Enviar';
 }
+
+$('e').onclick = async () => {
+  const texto = $('t').value;
+  const b = $('e');
+  b.disabled = true;
+  try {
+    const r = await fetch('/api/palavras', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto, numero: Number(numero) }),
+    });
+    if (!r.ok) throw new Error('falhou');
+    const estado = ler() || {};
+    sessionStorage.estado = JSON.stringify({ ...estado, enviou: true });
+    final();
+  } catch (e) {
+    b.disabled = false;
+    b.textContent = 'Tentar de novo';
+  }
+};
+
+function final() {
+  show('end');
+  $('final').textContent = pts + ' / ' + TOTAL;
+  const pct = TOTAL ? pts / TOTAL : 0;
+  const msg =
+    pct === 1 ? 'Perfeito! Você domina a diferença entre preconceito, discriminação e racismo.' :
+    pct >= 0.7 ? 'Muito bom! Você entende bem a diferença entre as três ideias.' :
+    pct >= 0.4 ? 'Você já separa algumas ideias. Continue firme!' :
+    'Vale revisar os conceitos. Entender a diferença ajuda a reconhecer e combater cada um deles.';
+  $('msg').textContent = 'Seu número é #' + numero + '. ' + msg + ' Olha a nuvem na TV.';
+}
+
+$('novo').onclick = () => {
+  sessionStorage.removeItem('estado');
+  location.reload();
+};
+
 iniciar();
 </script>
+</body>
+</html>
