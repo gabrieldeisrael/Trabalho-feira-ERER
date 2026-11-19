@@ -10,6 +10,7 @@ const io = new Server(srv);
 
 const SENHA = process.env.MOD_SENHA || 'troque-isso';
 const BLOQUEADAS = []; // palavrões óbvios: preencha, serão rejeitados na hora
+const TOTAL_PERGUNTAS = 10; // quantidade de perguntas do QUIZ em public/index.html
 
 const url = process.env.DATABASE_URL;
 const db = new Pool({
@@ -118,26 +119,33 @@ app.post('/api/excluir', auth, async (q, r) => {
   r.json({ ok: true });
 });
 
+// Zerar tudo antes da feira (os números voltam a começar em 1)
+app.post('/api/limpar', auth, async (q, r) => {
+  await db.query('truncate table respostas, palavras, participantes restart identity');
+  avisar();
+  r.json({ ok: true });
+});
+
 // Estatísticas (públicas, ficam abertas na TV/computador da feira)
 app.get('/api/stats', async (q, r) => {
-  const [perguntas, ranking, totais, totalPerguntas] = await Promise.all([
+  const [perguntas, ranking, totais] = await Promise.all([
     db.query(`select pergunta, count(*) filter (where acertou)::int as acertos,
                      count(*)::int as respondidas
-              from respostas group by pergunta order by pergunta`),
+              from respostas where pergunta between 1 and $1 group by pergunta order by pergunta`, [TOTAL_PERGUNTAS]),
     db.query(`select p.numero, count(r.id) filter (where r.acertou)::int as acertos,
                      count(r.id)::int as respondidas
-              from participantes p left join respostas r on r.participante = p.numero
-              group by p.numero order by acertos desc, p.numero asc limit 30`),
+              from participantes p left join respostas r
+                on r.participante = p.numero and r.pergunta between 1 and $1
+              group by p.numero order by acertos desc, p.numero asc limit 30`, [TOTAL_PERGUNTAS]),
     db.query(`select (select count(*) from participantes)::int as participantes,
                      (select count(*) from palavras)::int as palavras,
                      (select count(*) from palavras where status='aprovada')::int as aprovadas`),
-    db.query('select count(distinct pergunta)::int as n from respostas'),
   ]);
   r.json({
     perguntas: perguntas.rows,
     ranking: ranking.rows,
     totais: totais.rows[0],
-    totalPerguntas: totalPerguntas.rows[0].n,
+    totalPerguntas: TOTAL_PERGUNTAS,
   });
 });
 
@@ -146,7 +154,7 @@ app.get('/api/participantes/:numero', async (q, r) => {
   if (!Number.isInteger(numero) || numero <= 0) return r.status(400).json({ erro: 'número inválido' });
   const [p, respostas, palavra] = await Promise.all([
     db.query('select numero, criado from participantes where numero=$1', [numero]),
-    db.query('select pergunta, acertou from respostas where participante=$1 order by pergunta', [numero]),
+    db.query('select pergunta, acertou from respostas where participante=$1 and pergunta between 1 and $2 order by pergunta', [numero, TOTAL_PERGUNTAS]),
     db.query('select texto, status from palavras where participante=$1 order by id desc limit 1', [numero]),
   ]);
   if (!p.rows.length) return r.sendStatus(404);

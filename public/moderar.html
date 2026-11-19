@@ -10,7 +10,7 @@
   input { font: inherit; border: 2px solid #cfd4e6; border-radius: 8px; padding: 9px 12px; }
   button { font: inherit; font-weight: 600; background: #3a4db5; color: #fff; border: 0;
            border-radius: 8px; padding: 8px 14px; cursor: pointer; margin-left: 4px; }
-  #painel[hidden], #login[hidden] { display: none; }
+  #painel[hidden], #login[hidden], #confirmar[hidden] { display: none; }
   .erro { color: #c2331f; }
 </style>
 <h1>Moderação</h1>
@@ -25,6 +25,14 @@
   <ul id="pendentes"></ul>
   <h2>Na nuvem</h2>
   <ul id="aprovadas"></ul>
+  <p style="margin-top:40px;border-top:1px solid #cfd4e6;padding-top:16px">
+    <button id="limpar">Limpar dados de teste</button>
+    <span id="confirmar" hidden>
+      Apaga participantes, respostas e palavras. Tem certeza?
+      <button id="sim">Sim, limpar</button>
+      <button id="nao">Cancelar</button>
+    </span>
+  </p>
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -64,11 +72,11 @@ function lista(id, itens, botoes) {
 
 async function carregar() {
   if (!S) return mostrarLogin();
-  const h = { 'x-senha': S, 'Content-Type': 'application/json' };
+  const h = () => ({ 'x-senha': S, 'Content-Type': 'application/json' });
   try {
     const [rp, ra] = await Promise.all([
-      fetch('/api/pendentes', { headers: h }),
-      fetch('/api/aprovadas', { headers: h }),
+      fetch('/api/pendentes', { headers: h() }),
+      fetch('/api/aprovadas', { headers: h() }),
     ]);
     if (rp.status === 401 || ra.status === 401) {
       sessionStorage.removeItem('senha');
@@ -79,12 +87,12 @@ async function carregar() {
     const [pendentes, aprovadas] = await Promise.all([rp.json(), ra.json()]);
 
     lista('pendentes', pendentes, [
-      ['✅', texto => fetch('/api/moderar', { method: 'POST', headers: h, body: JSON.stringify({ texto, aprovar: true }) })],
-      ['❌', texto => fetch('/api/moderar', { method: 'POST', headers: h, body: JSON.stringify({ texto, aprovar: false }) })],
+      ['✅', texto => fetch('/api/moderar', { method: 'POST', headers: h(), body: JSON.stringify({ texto, aprovar: true }) })],
+      ['❌', texto => fetch('/api/moderar', { method: 'POST', headers: h(), body: JSON.stringify({ texto, aprovar: false }) })],
     ]);
     lista('aprovadas', aprovadas, [
       ['🗑️', async texto => {
-        await fetch('/api/excluir', { method: 'POST', headers: h, body: JSON.stringify({ texto }) });
+        await fetch('/api/excluir', { method: 'POST', headers: h(), body: JSON.stringify({ texto }) });
         carregar();
       }],
     ]);
@@ -95,6 +103,21 @@ async function carregar() {
 
 $('entrar').onclick = entrar;
 $('senha').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+$('limpar').onclick = () => { $('confirmar').hidden = false; };
+$('nao').onclick = () => { $('confirmar').hidden = true; };
+$('sim').onclick = async () => {
+  const r = await fetch('/api/limpar', {
+    method: 'POST',
+    headers: { 'x-senha': S, 'Content-Type': 'application/json' },
+  });
+  if (r.status === 401) {
+    sessionStorage.removeItem('senha');
+    S = '';
+    return mostrarLogin('Senha incorreta.');
+  }
+  $('confirmar').hidden = true;
+  carregar();
+};
 io().on('atualizar', carregar);
 if (S) { $('painel').hidden = false; carregar(); } else mostrarLogin();
 </script>

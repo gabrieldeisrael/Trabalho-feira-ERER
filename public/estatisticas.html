@@ -27,6 +27,8 @@
   .card span { color:var(--muted); font-size:.9rem; }
   .barra { margin:10px 0; }
   .barra .rotulo { display:flex; justify-content:space-between; gap:12px; font-size:.92rem; }
+  .barra .rotulo span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .barra .rotulo span:last-child { flex-shrink:0; }
   .trilha { height:10px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:4px; }
   .trilha i { display:block; height:100%; background:var(--r); border-radius:99px; }
   ol { margin:0; padding-left:26px; }
@@ -63,6 +65,7 @@
   </div>
   <div id="resultado" class="vazio">Digite o número que você recebeu no quiz.</div>
 </main>
+<script src="/perguntas.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -103,7 +106,9 @@ async function carregar() {
       bloco.className = 'barra';
       const rotulo = document.createElement('div');
       rotulo.className = 'rotulo';
-      const nome = document.createElement('span'); nome.textContent = 'Pergunta ' + p.pergunta;
+      const nome = document.createElement('span');
+      nome.textContent = p.pergunta + '. ' + (ENUNCIADOS[p.pergunta] || 'Pergunta ' + p.pergunta);
+      nome.title = nome.textContent;
       const valor = document.createElement('span'); valor.textContent = p.acertos + '/' + p.respondidas + ' (' + pct + '%)';
       rotulo.append(nome, valor);
       const trilha = document.createElement('div'); trilha.className = 'trilha';
@@ -149,7 +154,8 @@ async function buscar() {
     for (const x of d.respostas) {
       const p = document.createElement('div');
       p.className = x.acertou ? 'certo' : 'errado';
-      p.textContent = (x.acertou ? '✓' : '✗') + ' Pergunta ' + x.pergunta;
+      p.textContent = (x.acertou ? '✓' : '✗') + ' ' + x.pergunta + '. ' +
+        (ENUNCIADOS[x.pergunta] || 'Pergunta ' + x.pergunta);
       res.append(p);
     }
     if (d.palavra) {

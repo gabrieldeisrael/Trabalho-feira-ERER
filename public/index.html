@@ -12,56 +12,57 @@
   input { font: inherit; border: 2px solid #cfd4e6; border-radius: 8px; padding: 9px 12px; }
 </style>
 <div id="app"></div>
+<script src="/perguntas.js"></script>
 <script>
 const TEMA = 'uma palavra sobre racismo, preconceito e discriminação';
 // "id" é fixo: as estatísticas usam esse número, não a ordem em que a pergunta aparece.
 const QUIZ = [
-  { id: 1, p: 'O que é racismo?', o: [
+  { id: 1, p: ENUNCIADOS[1], o: [
     'Um sistema de ideias e práticas que produz desigualdade entre grupos raciais',
     'Uma opinião negativa sobre alguém sem conhecê-lo',
     'Um ato isolado de violência entre duas pessoas',
     'A preferência por determinada religião'], certa: 0 },
-  { id: 2, p: 'Qual a diferença entre preconceito e discriminação?', o: [
+  { id: 2, p: ENUNCIADOS[2], o: [
     'Preconceito é a ação e discriminação é a ideia',
     'Preconceito só existe entre estrangeiros',
     'Preconceito e discriminação são sinônimos',
     'Preconceito é um julgamento antes de conhecer; discriminação é a ação que nega direitos'], certa: 3 },
-  { id: 3, p: 'O que significa racismo estrutural?', o: [
+  { id: 3, p: ENUNCIADOS[3], o: [
     'Racismo presente apenas em leis antigas',
     'Racismo embutido em regras, instituições e hábitos, que gera desigualdade mesmo sem intenção declarada',
     'Racismo praticado somente por pessoas más',
     'Racismo que acontece apenas na escola'], certa: 1 },
-  { id: 4, p: 'O que diz a Constituição Federal de 1988 sobre o racismo?', o: [
+  { id: 4, p: ENUNCIADOS[4], o: [
     'É crime inafiançável e imprescritível',
     'É contravenção punida com multa',
     'O racismo não é citado na Constituição',
     'Só é crime se houver agressão física'], certa: 0 },
-  { id: 5, p: 'O que estabelece a Lei 7.716/89, conhecida como Lei Caó?', o: [
+  { id: 5, p: ENUNCIADOS[5], o: [
     'Torna obrigatório o ensino de história afro-brasileira',
     'Cria cotas em universidades',
     'Define os crimes resultantes de preconceito de raça, cor, etnia, religião ou procedência nacional',
     'Cria o Dia da Consciência Negra'], certa: 2 },
-  { id: 6, p: 'O que mudou com a Lei 14.532/2023?', o: [
+  { id: 6, p: ENUNCIADOS[6], o: [
     'Tornou o crime de racismo prescritível',
     'Acabou com a Lei Caó',
     'Acabou com as cotas nas universidades',
     'Equiparou a injúria racial ao crime de racismo e aumentou as penas'], certa: 3 },
-  { id: 7, p: 'Se um aluno é excluído de um grupo apenas por ser negro, isto é:', o: [
+  { id: 7, p: ENUNCIADOS[7], o: [
     'Discriminação, porque é uma ação que nega participação por causa da raça',
     'Preconceito, porque é apenas uma opinião',
     'Racismo recreativo, porque é uma brincadeira',
     'Nenhuma das anteriores'], certa: 0 },
-  { id: 8, p: 'O que determina a Lei 10.639/2003?', o: [
+  { id: 8, p: ENUNCIADOS[8], o: [
     'Cria o feriado de 20 de novembro',
     'O ensino obrigatório de história e cultura afro-brasileira nas escolas',
     'Cria cotas em universidades e concursos',
     'Cria o Disque 100'], certa: 1 },
-  { id: 9, p: 'Qual é o objetivo das ações afirmativas, como as cotas?', o: [
+  { id: 9, p: ENUNCIADOS[9], o: [
     'Dar vantagens permanentes a um grupo',
     'Corrigir desigualdades históricas e ampliar oportunidades para grupos excluídos',
     'Substituir o vestibular das universidades',
     'Reduzir o número de vagas oferecidas'], certa: 1 },
-  { id: 10, p: 'Por que 20 de novembro é uma data importante?', o: [
+  { id: 10, p: ENUNCIADOS[10], o: [
     'É o dia da promulgação da Constituição de 1988',
     'É o dia da Abolição da Escravidão no Brasil',
     'É o Dia da Consciência Negra, em lembrança da morte de Zumbi dos Palmares',
