@@ -73,7 +73,14 @@ Todas as rotas que alteram dados emitem `atualizar` e `stats` via Socket.IO.
 - Eventos emitidos pelo servidor:
   - **`atualizar`** → recarrega a nuvem (`/nuvem`, `/tv.html`) e a moderação.
   - **`stats`** → recarrega o `/estatisticas`.
-- Evento enviado pelos clientes: **`hb`** a cada **240000 ms (4 min)** nas páginas da TV, nuvem e estatísticas — heartbeat para manter o serviço acordado no Render gratuito.
+- Evento enviado pelos clientes: **`hb`** a cada **240000 ms (4 min)** nas páginas da TV, nuvem e estatísticas.
+
+### Keep-alive externo (Render grátis)
+
+- `.github/workflows/keep-alive.yml`: GitHub Actions executa a cada **10 minutos** (cron `*/10 * * * *`) e faz `curl` em `https://trabalho-feira-erer.onrender.com/health`.
+- Também pode ser disparado manualmente em **Actions → Keep alive → Run workflow**.
+- O agendamento só funciona se o workflow estiver no **branch padrão** do GitHub.
+- Alternativa sem código: um monitor externo (UptimeRobot, cron-job.org etc.) apontando para o mesmo `/health` a cada 5–10 minutos.
 
 ---
 

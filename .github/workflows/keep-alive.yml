@@ -1,0 +1,13 @@
+name: Keep alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acordar a aplicação
+        run: curl -fsS --retry 2 --retry-delay 5 --max-time 30 https://trabalho-feira-erer.onrender.com/health
