@@ -166,10 +166,10 @@ const QUIZ = [
 const TOTAL = QUIZ.filter(q => q.certa >= 0).length;
 const $ = id => document.getElementById(id);
 const letters = ["A", "B", "C", "D"];
-let numero, ordem, i = 0, pts = 0, respostas = {}, escolha = null, respondeu = false;
+let numero, ordem, i = 0, pts = 0, respostas = {}, escolha = null, respondeu = false, startedAt = null;
 
 const salvar = () => sessionStorage.estado = JSON.stringify(
-  { numero, ordem, i, pts, respostas, escolha, respondeu });
+  { numero, ordem, i, pts, respostas, escolha, respondeu, startedAt });
 const ler = () => { try { return JSON.parse(sessionStorage.estado); } catch (e) { return null; } };
 
 function show(id){
@@ -196,8 +196,9 @@ function montarQuiz() {
 function iniciar() {
   const estado = ler();
   if (!estado) return;
-  ({ numero, ordem, i, pts, respostas, escolha, respondeu } = estado);
+  ({ numero, ordem, i, pts, respostas, escolha, respondeu, startedAt } = estado);
   respostas = respostas || {};
+  if (!startedAt) { startedAt = Date.now(); salvar(); } // estados antigos sem medição
   if (estado.enviou) return final();
   if (i >= ordem.length) return palavra();
   show('quiz');
@@ -212,6 +213,7 @@ $('go').onclick = async () => {
     numero = (await r.json()).numero;
     ordem = montarQuiz();
     i = 0; pts = 0; respostas = {}; escolha = null; respondeu = false;
+    startedAt = Date.now();
     salvar();
     show('quiz');
     render();
@@ -309,13 +311,21 @@ $('e').onclick = async () => {
   const texto = $('t').value;
   const b = $('e');
   b.disabled = true;
+  const finishedAt = Date.now();
   try {
     const r = await fetch('/api/palavras', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texto, numero: Number(numero) }),
+      body: JSON.stringify({
+        texto,
+        numero: Number(numero),
+        startedAt,
+        finishedAt,
+        duracao_ms: startedAt ? finishedAt - startedAt : null,
+      }),
     });
-    if (!r.ok) throw new Error('falhou');
+    // 409 = este número já tinha enviado; trata como concluído para não travar a tela
+    if (!r.ok && r.status !== 409) throw new Error('falhou');
     const estado = ler() || {};
     sessionStorage.estado = JSON.stringify({ ...estado, enviou: true });
     final();

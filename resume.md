@@ -50,7 +50,7 @@ Aplicação para a feira: um Chromebook faz o quiz e envia uma palavra, outro mo
 | `/api/nuvem` | `[{ texto, n }]` | Só palavras com `status='aprovada'`, agrupadas e contadas |
 | `/api/pendentes` | `[{ texto, n }]` | Requer `x-senha`; ordenado pela mais antiga |
 | `/api/aprovadas` | `[{ texto, n }]` | Requer `x-senha`; ordenado pela mais recente |
-| `/api/stats` | `{ perguntas, ranking, totais, totalPerguntas }` | Público; ignora perguntas fora de 1–10; ranking limitado a 30 |
+| `/api/stats` | `{ perguntas, ranking, totais, speedrun, totalPerguntas }` | Público; ignora perguntas fora de 1–10; ranking e `speedrun` limitados a 30 |
 | `/api/participantes/:numero` | `{ numero, criado, respostas, palavra }` | Público; usado pela busca do `/estatisticas` |
 
 ### POST
@@ -59,7 +59,7 @@ Aplicação para a feira: um Chromebook faz o quiz e envia uma palavra, outro mo
 |---|---|---|---|
 | `/api/participantes` | — | não | Cria participante, devolve `{ numero }` sequencial (`serial`) e avisa o Socket.IO |
 | `/api/respostas` | `{ numero, pergunta, acertou }` | não | Salva/acatualiza a resposta (`unique (participante, pergunta)`); `pergunta` é o ID fixo 1–10; `acertou` é booleano |
-| `/api/palavras` | `{ texto, numero }` | não | Insere palavra em minúsculas (até 30 caracteres) como `pendente`; se o texto já tiver sido decidido, herda o status (inclusive `excluida`) |
+| `/api/palavras` | `{ texto, numero, startedAt, finishedAt, duracao_ms }` | não | Grava duração do quiz e envia a palavra; **409** se o número já enviou; tempos zerados/negativos/estourados viram `null` e não entram no speedrun; status herdado se a palavra já foi decidida |
 | `/api/moderar` | `{ texto, aprovar }` | **sim** | `aprovada` ou `rejeitada` para todas as pendentes com aquele texto |
 | `/api/excluir` | `{ texto }` | **sim** | Muda aprovadas para `excluida` — some da nuvem, mas as respostas permanecem |
 | `/api/limpar` | — | **sim** | `TRUNCATE ... RESTART IDENTITY`: apaga tudo e os números voltam a começar em 1 |
@@ -90,13 +90,13 @@ Todas as rotas que alteram dados emitem `atualizar` e `stats` via Socket.IO.
 
 | Tabela | Colunas |
 |---|---|
-| `participantes` | `numero serial PK`, `criado timestamptz default now()` |
+| `participantes` | `numero serial PK`, `criado`, `started_at`, `finished_at`, `duracao_ms int`, `enviado boolean` |
 | `respostas` | `id serial PK`, `participante` (FK), `pergunta int`, `acertou boolean`, `unique (participante, pergunta)` |
 | `palavras` | `id serial PK`, `texto`, `status` (padrão `pendente`), `criado`, `participante` (FK) |
 
 Status possíveis da palavra: **`pendente`**, **`aprovada`**, **`rejeitada`**, **`excluida`**.
 
-No `server.js` existe `TOTAL_PERGUNTAS = 10` (fixo) e o array `BLOQUEADAS` (vazio) para palavrões rejeitados automaticamente.
+No `server.js` existe `TOTAL_PERGUNTAS = 10` (fixo) e o array `BLOQUEADAS` (vazio) para palavrões rejeitados automaticamente. Tempos válidos vão de 1 s a 2 h, com tolerância de 5 min entre os relógios. No boot, a sequence do `serial` é sincronizada com o maior número existente — o contador não volta para #1 quando o Render dorme e acorda (só o botão **Limpar dados de teste** zera de propósito).
 
 ---
 
@@ -122,6 +122,8 @@ No `server.js` existe `TOTAL_PERGUNTAS = 10` (fixo) e o array `BLOQUEADAS` (vazi
 - Barras de acerto por pergunta (usam os enunciados de `perguntas.js`).
 - Ranking dos que mais acertaram (top 30).
 - Busca pelo número: acertos/erros por pergunta, palavra enviada e status dela (na nuvem / aguardando / rejeitada / removida).
+- **Top 3 Speedrun (fixo):** maior pontuação e, no empate, menor `duracao_ms`; quem não tem tempo válido fica por último. Não fica travado nos primeiros 10/10 lentos.
+- **Top 3 Rotativo:** segundo pódio com três recortes da mesma base (`mais rápidos` → `mais recentes` → `mais acertos`), trocados a cada 5 min pelo relógio. Não apaga dados nem altera a busca individual ou as barras por pergunta.
 
 ### TV
 - `/tv.html` (nuvem pura) ou `/nuvem` (visual original com definições/grupos). Ambos mostram **somente palavras aprovadas** e se atualizam em tempo real.

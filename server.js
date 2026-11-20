@@ -11,6 +11,9 @@ const io = new Server(srv);
 const SENHA = process.env.MOD_SENHA || 'troque-isso';
 const BLOQUEADAS = []; // palavrões óbvios: preencha, serão rejeitados na hora
 const TOTAL_PERGUNTAS = 10; // quantidade de perguntas do QUIZ em public/index.html
+const MIN_MS = 1000;                 // abaixo de 1s: tempo inválido
+const MAX_MS = 2 * 60 * 60 * 1000;   // acima de 2h: aba dormiu / relógio maluco
+const TOL_MS = 5 * 60 * 1000;        // tolerância entre relógio do navegador e do servidor
 
 const url = process.env.DATABASE_URL;
 const db = new Pool({
@@ -63,25 +66,64 @@ app.get('/api/nuvem', async (q, r) => {
   r.json(rows);
 });
 
-// Usuário envia palavra
+// Usuário envia palavra (uma vez por número) junto com a duração do quiz
 app.post('/api/palavras', async (q, r) => {
   const t = String(q.body.texto || '').trim().toLowerCase().slice(0, 30);
   if (!t) return r.status(400).json({ erro: 'vazio' });
   const numero = Number(q.body.numero);
-  const participante = Number.isInteger(numero) && numero > 0 ? numero : null;
+  if (!Number.isInteger(numero) || numero <= 0) return r.status(400).json({ erro: 'número inválido' });
 
-  let status = 'pendente';
-  if (BLOQUEADAS.includes(t)) {
-    status = 'rejeitada';
-  } else {
-    // se a palavra já foi decidida antes, herda a decisão (excluídas também ficam fora)
-    const { rows } = await db.query(
-      "select status from palavras where texto=$1 and status in ('aprovada','rejeitada','excluida') limit 1",
-      [t]
-    );
-    if (rows.length) status = rows[0].status;
+  const agora = Date.now();
+  const started = Number(q.body.startedAt);
+  const finished = Number(q.body.finishedAt);
+  const informado = Number(q.body.duracao_ms);
+  const duracao = finished - started;
+  const tempoOk =
+    Number.isFinite(started) && started > 0 &&
+    Number.isFinite(finished) && finished > 0 &&
+    duracao >= MIN_MS && duracao <= MAX_MS &&
+    Math.abs(informado - duracao) <= 1000 &&
+    finished <= agora + TOL_MS &&
+    started >= agora - MAX_MS - TOL_MS;
+
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const p = await client.query('select criado, enviado from participantes where numero=$1 for update', [numero]);
+    if (!p.rows.length) { await client.query('ROLLBACK'); return r.sendStatus(404); }
+    if (p.rows[0].enviado) { await client.query('ROLLBACK'); return r.status(409).json({ erro: 'já enviado' }); }
+
+    // Tempo impossível (aba dormiu, relógio ajustado, valor zerado/negativo) fica sem tempo
+    // e não entra no speedrun. As respostas e a palavra continuam salvas normalmente.
+    let startedAt = null, finishedAt = null, duracaoMs = null;
+    if (tempoOk && started >= new Date(p.rows[0].criado).getTime() - TOL_MS) {
+      startedAt = started;
+      finishedAt = finished;
+      duracaoMs = Math.round(duracao);
+    }
+
+    await client.query(
+      `update participantes set started_at=to_timestamp($2::double precision/1000.0),
+         finished_at=to_timestamp($3::double precision/1000.0), duracao_ms=$4, enviado=true
+       where numero=$1`, [numero, startedAt, finishedAt, duracaoMs]);
+
+    let status = 'pendente';
+    if (BLOQUEADAS.includes(t)) {
+      status = 'rejeitada';
+    } else {
+      // se a palavra já foi decidida antes, herda a decisão (excluídas também ficam fora)
+      const { rows } = await client.query(
+        "select status from palavras where texto=$1 and status in ('aprovada','rejeitada','excluida') limit 1", [t]);
+      if (rows.length) status = rows[0].status;
+    }
+    await client.query('insert into palavras (texto, status, participante) values ($1,$2,$3)', [t, status, numero]);
+    await client.query('COMMIT');
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    return r.status(500).json({ erro: 'falha ao salvar' });
+  } finally {
+    client.release();
   }
-  await db.query('insert into palavras (texto, status, participante) values ($1,$2,$3)', [t, status, participante]);
   avisar();
   r.json({ ok: true });
 });
@@ -128,7 +170,7 @@ app.post('/api/limpar', auth, async (q, r) => {
 
 // Estatísticas (públicas, ficam abertas na TV/computador da feira)
 app.get('/api/stats', async (q, r) => {
-  const [perguntas, ranking, totais] = await Promise.all([
+  const [perguntas, ranking, totais, speedrun] = await Promise.all([
     db.query(`select pergunta, count(*) filter (where acertou)::int as acertos,
                      count(*)::int as respondidas
               from respostas where pergunta between 1 and $1 group by pergunta order by pergunta`, [TOTAL_PERGUNTAS]),
@@ -140,11 +182,21 @@ app.get('/api/stats', async (q, r) => {
     db.query(`select (select count(*) from participantes)::int as participantes,
                      (select count(*) from palavras)::int as palavras,
                      (select count(*) from palavras where status='aprovada')::int as aprovadas`),
+    // Pool do speedrun: pontuação primeiro, menor tempo desempata; sem tempo vai por último
+    db.query(`select p.numero, count(r.id) filter (where r.acertou)::int as acertos,
+                     p.duracao_ms, p.finished_at
+              from participantes p left join respostas r
+                on r.participante = p.numero and r.pergunta between 1 and $1
+              where p.enviado
+              group by p.numero, p.duracao_ms, p.finished_at
+              order by acertos desc, p.duracao_ms asc nulls last, p.numero asc
+              limit 30`, [TOTAL_PERGUNTAS]),
   ]);
   r.json({
     perguntas: perguntas.rows,
     ranking: ranking.rows,
     totais: totais.rows[0],
+    speedrun: speedrun.rows,
     totalPerguntas: TOTAL_PERGUNTAS,
   });
 });
@@ -188,5 +240,19 @@ io.on('connection', (s) => s.on('hb', () => {}));
     criado timestamptz default now()
   )`);
   await db.query('alter table palavras add column if not exists participante int references participantes(numero)');
+  await db.query('alter table participantes add column if not exists started_at timestamptz');
+  await db.query('alter table participantes add column if not exists finished_at timestamptz');
+  await db.query('alter table participantes add column if not exists duracao_ms int');
+  await db.query('alter table participantes add column if not exists enviado boolean not null default false');
+
+  // Render grátis dorme/acorda: a sequence do serial já sobrevive ao restart, mas
+  // garantimos que ela nunca fique atrás do maior número usado — e nunca volta a #1 sozinha.
+  const { rows: seq } = await db.query('select count(*)::int as n, coalesce(max(numero), 0) as max from participantes');
+  if (seq[0].n > 0) {
+    await db.query(`select setval(
+      pg_get_serial_sequence('participantes','numero'),
+      greatest($1, coalesce(pg_sequence_last_value(pg_get_serial_sequence('participantes','numero')), 0)))`,
+      [seq[0].max]);
+  }
   srv.listen(process.env.PORT || 3000, () => console.log('no ar'));
 })();
