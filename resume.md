@@ -16,7 +16,7 @@ Aplicação para a feira: um Chromebook faz o quiz e envia uma palavra, outro mo
 | `/moderar.html` | `public/moderar.html` | Chromebook 2 (moderadores) | Aprovar/rejeitar e apagar palavras (com senha) |
 | `/estatisticas` | `public/estatisticas.html` | Chromebook 3 (público) | Estatísticas e busca pelo número — **sem senha** |
 | `/tv.html` | `public/tv.html` | TV | Nuvem minimalista (fundo preto, `wordcloud2.js`) |
-| `/nuvem` | `nuvemdepalavrantes.html` (raiz) | TV (opcional) | Nuvem com o visual original do projeto |
+| `/nuvem` | `public/nuvemdepalavrantes.html` | TV (opcional) | Nuvem com o visual original do projeto |
 | `/health` | — | Render/monitoramento | Retorna `ok` |
 | `/perguntas.js` | `public/perguntas.js` | quiz e estatísticas | Enunciados das 10 perguntas (fonte única) |
 
@@ -158,7 +158,7 @@ No `server.js` existe `TOTAL_PERGUNTAS = 10` (fixo) e o array `BLOQUEADAS` (vazi
 | `public/perguntas.js` | Enunciados das 10 perguntas (compartilhado com estatísticas) |
 | `public/moderar.html` | Senha, aprovação/rejeição, exclusão e limpeza |
 | `public/estatisticas.html` | Painel público de estatísticas e busca |
-| `nuvemdepalavrantes.html` | Nuvem com visual original |
+| `public/nuvemdepalavrantes.html` | Nuvem com visual original |
 | `public/tv.html` | Nuvem minimalista para TV |
 | `package.json` | Dependências e script `start` |
 | `AGENTS.md` / `AI_LOG.md` | Regras do projeto / histórico de alterações |

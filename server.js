@@ -30,7 +30,7 @@ const avisar = () => { io.emit('atualizar'); io.emit('stats'); };
 app.get('/health', (q, r) => r.send('ok'));
 
 // Páginas
-app.get('/nuvem', (q, r) => r.sendFile(path.join(__dirname, 'nuvemdepalavrantes.html')));
+app.get('/nuvem', (q, r) => r.sendFile(path.join(__dirname, 'public', 'nuvemdepalavrantes.html')));
 app.get('/estatisticas', (q, r) => r.sendFile(path.join(__dirname, 'public', 'estatisticas.html')));
 
 // Cada pessoa que abre o quiz recebe um número sequencial
