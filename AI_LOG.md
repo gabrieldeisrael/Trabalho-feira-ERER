@@ -1,6 +1,6 @@
 # AI_LOG
 ---
-
+Big Pickle | gabrieldeisrael | Movi nuvemdepalavrantes.html para public/ e atualizei a rota /nuvem em server.js e as referências em resume.md
 Big Pickle | gabrieldeisrael | Mesclei o visual do HTML anexado no quiz e voltei às 10 perguntas originais com gabarito ADBACDABBC em public/index.html e public/perguntas.js
 Big Pickle | gabrieldeisrael | Coloquei 10 perguntas com shuffle e gabarito ADBACDABBC, enunciados em public/perguntas.js, total de perguntas corrigido e botão de limpar dados em public/index.html, public/estatisticas.html, public/moderar.html e server.js
 Big Pickle | gabrieldeisrael | Adicionei número e respostas do quiz, exclusão na moderação, estatísticas públicas e nuvem ao vivo em server.js, public/index.html, public/moderar.html, public/estatisticas.html e nuvemdepalavrantes.html
